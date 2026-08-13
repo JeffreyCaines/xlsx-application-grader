@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f3f6fb" />
+    <title>User Manual | XLSX Application Grader</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #0f172a;
+        --muted: #475569;
+        --line: #cbd5e1;
+        --bg: #f3f6fb;
+        --card: #ffffff;
+        --accent: #0ea5e9;
+        --accent-dark: #0369a1;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Work Sans", Helvetica, Arial, Lucida, sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+        line-height: 1.55;
+      }
+
+      a {
+        color: var(--accent-dark);
+      }
+
+      .top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(243, 246, 251, 0.94);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(8px);
+      }
+
+      .top__inner {
+        width: min(920px, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 0.85rem 0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+      }
+
+      .top__brand {
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+
+      .top__links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1rem;
+        font-size: 0.92rem;
+      }
+
+      .top__links a {
+        text-decoration: none;
+        color: var(--muted);
+      }
+
+      .top__links a:hover {
+        color: var(--accent-dark);
+      }
+
+      main {
+        width: min(920px, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 1.75rem 0 3.5rem;
+      }
+
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: clamp(1.7rem, 3vw, 2.2rem);
+        line-height: 1.2;
+      }
+
+      .lede {
+        margin: 0 0 1.5rem;
+        color: var(--muted);
+        max-width: 42rem;
+      }
+
+      .toc {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 1rem 1.15rem;
+        margin-bottom: 2rem;
+      }
+
+      .toc h2 {
+        margin: 0 0 0.6rem;
+        font-size: 1rem;
+      }
+
+      .toc ol {
+        margin: 0;
+        padding-left: 1.25rem;
+      }
+
+      .toc li {
+        margin: 0.25rem 0;
+      }
+
+      section {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 1.25rem 1.35rem 1.4rem;
+        margin-bottom: 1rem;
+      }
+
+      section h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1.25rem;
+      }
+
+      section h3 {
+        margin: 1.15rem 0 0.45rem;
+        font-size: 1.05rem;
+      }
+
+      p,
+      ul,
+      ol {
+        margin: 0 0 0.75rem;
+      }
+
+      ul,
+      ol {
+        padding-left: 1.25rem;
+      }
+
+      li {
+        margin: 0.3rem 0;
+      }
+
+      .note {
+        margin: 0.85rem 0 0;
+        padding: 0.75rem 0.9rem;
+        border-left: 3px solid var(--accent);
+        background: #f0f9ff;
+        border-radius: 0 8px 8px 0;
+        color: var(--muted);
+      }
+
+      .note strong {
+        color: var(--ink);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+        margin: 0.5rem 0 0.85rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: 0.55rem 0.65rem;
+        border: 1px solid var(--line);
+      }
+
+      th {
+        background: #f8fafc;
+        font-weight: 600;
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9em;
+        background: #f1f5f9;
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+      }
+
+      footer {
+        width: min(920px, calc(100% - 2rem));
+        margin: 0 auto 2rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="top__inner">
+        <div class="top__brand">XLSX Application Grader Manual</div>
+        <nav class="top__links" aria-label="Quick links">
+          <a href="#start">How to start</a>
+          <a href="#first">First-time grading</a>
+          <a href="#reference">Quick reference</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <h1>User Manual</h1>
+      <p class="lede">
+        This guide explains how to grade spreadsheet applications with XLSX Application
+        Grader. No prior knowledge of the program is required.
+      </p>
+
+      <nav class="toc" aria-label="Table of contents">
+        <h2>Contents</h2>
+        <ol>
+          <li><a href="#what">What this program is</a></li>
+          <li><a href="#start">How to start</a></li>
+          <li><a href="#overview">Screen overview</a></li>
+          <li><a href="#first">First-time grading</a></li>
+          <li><a href="#rows">Working with rows and columns</a></li>
+          <li><a href="#saved">Where grades are saved</a></li>
+          <li><a href="#copy">Copy grades</a></li>
+          <li><a href="#configs">Configs</a></li>
+          <li><a href="#settings">Settings and layout</a></li>
+          <li><a href="#reference">Quick reference</a></li>
+        </ol>
+      </nav>
+
+      <section id="what">
+        <h2>1. What this program is</h2>
+        <p>
+          XLSX Application Grader is a local Windows tool for scoring rows in an Excel
+          workbook. You open an <code>.xlsx</code> file, review one applicant (row) at a
+          time, enter numeric grades, and write those grades back into the workbook.
+        </p>
+        <p>
+          It is meant for people who review application spreadsheets. It is not a website
+          you log into. Everything runs on your computer.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>.xlsx</code> workbook</td>
+              <td>The spreadsheet you open. Row 1 must be column headers. Row 2 and below are data.</td>
+            </tr>
+            <tr>
+              <td><code>Grade for: …</code> columns</td>
+              <td>
+                Columns the app creates and fills when you submit grades. Example:
+                <code>Grade for: Essay</code>.
+              </td>
+            </tr>
+            <tr>
+              <td><code>Sum of All Grades</code></td>
+              <td>A total column the app maintains for each row.</td>
+            </tr>
+            <tr>
+              <td>Config</td>
+              <td>Saved layout for a workbook: which columns to grade, which to hide, and related settings.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="start">
+        <h2>2. How to start</h2>
+        <p>Use one of the two program files:</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Program</th>
+              <th>What it does</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>xlsx_application_grader.exe</code></td>
+              <td>Opens a desktop window for the grader.</td>
+            </tr>
+            <tr>
+              <td><code>xlsx_application_grader_web.exe</code></td>
+              <td>
+                Starts a local server and opens the grader in your default browser.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <ol>
+          <li>Double-click the EXE you were given.</li>
+          <li>Wait for the grader window or browser tab to appear.</li>
+          <li>You should see <strong>Open .xlsx</strong> in the top bar.</li>
+        </ol>
+        <p>
+          If you close every browser tab while using the web version, the local server stops
+          after a short delay. Restart the EXE if you see
+          <strong>Server connection lost</strong>.
+        </p>
+      </section>
+
+      <section id="overview">
+        <h2>3. Screen overview</h2>
+        <p>The main screen has four work areas plus a footer.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Area</th>
+              <th>Use it for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Top bar</strong></td>
+              <td>
+                <strong>Open .xlsx</strong>, <strong>Close</strong>, <strong>File</strong>,
+                <strong>Sheet</strong>, and config controls
+                (<strong>Active Config</strong>, <strong>Rename</strong>,
+                <strong>New Config</strong>, <strong>Import Config</strong>,
+                <strong>Export Config</strong>)
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Columns</strong> (left)</td>
+              <td>Hide columns you do not need. Check <strong>Grade</strong> on columns you will score.</td>
+            </tr>
+            <tr>
+              <td><strong>Grading</strong> (center)</td>
+              <td>
+                Enter scores, then <strong>Submit all</strong>. Optional:
+                <strong>Copy grades</strong>.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Current row</strong> (right)</td>
+              <td>
+                Read the applicant fields. Use <strong>Prev</strong>, <strong>Next</strong>,
+                or the <strong>Row</strong> number to move.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Footer</strong></td>
+              <td>
+                <strong>Settings</strong>, layout toggles, theme switch, and a status line
+                (for example <code>No file loaded</code>).
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="first">
+        <h2>4. First-time grading</h2>
+        <p>Do this the first time you grade a workbook.</p>
+        <ol>
+          <li>Select <strong>Open .xlsx</strong> and choose one or more <code>.xlsx</code> files.</li>
+          <li>
+            In <strong>Columns</strong>, check <strong>Grade</strong> beside each column you want
+            to score.
+          </li>
+          <li>
+            In <strong>Current row</strong>, read the applicant data. Row numbers start at
+            <strong>2</strong> because row <strong>1</strong> is the header row.
+          </li>
+          <li>
+            In <strong>Grading</strong>, type a number in each grade field you want to fill.
+          </li>
+          <li>
+            Select <strong>Submit all</strong>. The app writes values into
+            <code>Grade for: …</code> columns, updates <code>Sum of All Grades</code>, and saves.
+          </li>
+          <li>
+            Optional: turn on <strong>Auto-advance row</strong> in <strong>Settings</strong> so
+            Submit moves you to the next row.
+          </li>
+        </ol>
+        <p class="note">
+          <strong>Tip:</strong> Empty grade fields are skipped on submit. If every field is
+          empty, the status shows <code>No grades entered.</code> Non-numeric values show
+          <code>Grade must be a number.</code>
+        </p>
+      </section>
+
+      <section id="rows">
+        <h2>5. Working with rows and columns</h2>
+
+        <h3>5.1 Hide and show columns</h3>
+        <ul>
+          <li>In <strong>Columns</strong>, use the hide control on a column to remove it from view.</li>
+          <li>
+            Turn on <strong>Show hidden columns</strong> in <strong>Settings</strong> when you
+            need them back, then unhide.
+          </li>
+        </ul>
+
+        <h3>5.2 Grade checkboxes</h3>
+        <p>
+          Only columns with <strong>Grade</strong> checked appear as score inputs in
+          <strong>Grading</strong>.
+        </p>
+
+        <h3>5.3 Move between rows</h3>
+        <ul>
+          <li><strong>Prev</strong> / <strong>Next</strong> move one row at a time.</li>
+          <li>Type a number in <strong>Row</strong> to jump to that Excel row.</li>
+        </ul>
+
+        <h3>5.4 Clear a saved grade</h3>
+        <p>
+          On a grade card in <strong>Current row</strong>, use the clear control (title
+          <strong>Clear grade</strong>) to remove that cell’s grade and refresh the sum.
+        </p>
+
+        <h3>5.5 Sheets and multiple files</h3>
+        <ul>
+          <li>Use <strong>Sheet</strong> to switch worksheets in the open workbook.</li>
+          <li>
+            Use <strong>File</strong> to switch among workbooks still open in this session.
+          </li>
+          <li>Use <strong>Close</strong> to close the active file.</li>
+        </ul>
+      </section>
+
+      <section id="saved">
+        <h2>6. Where grades are saved</h2>
+        <p>
+          When you open a file through the app’s open dialog, grades are written to a
+          <strong>proxy copy</strong>, not to the original path you picked.
+        </p>
+        <p>On Windows the copy lives here:</p>
+        <p>
+          <code>%APPDATA%\xlsx_application_grader\Grades for - {workbook name}.xlsx</code>
+        </p>
+        <p>
+          Example: opening <code>Applicants.xlsx</code> grades
+          <code>Grades for - Applicants.xlsx</code> under that AppData folder.
+        </p>
+        <ul>
+          <li>If that proxy already exists, the app reuses it instead of copying again.</li>
+          <li>
+            Open the graded file from AppData (or use <strong>Copy grades</strong>) when you need
+            the results elsewhere.
+          </li>
+        </ul>
+        <p class="note">
+          <strong>Important:</strong> Do not assume the original workbook on your Desktop or
+          shared drive was updated. Check the <code>Grades for - …</code> file.
+        </p>
+      </section>
+
+      <section id="copy">
+        <h2>7. Copy grades</h2>
+        <ol>
+          <li>Open a workbook that already has grade columns.</li>
+          <li>Select <strong>Copy grades</strong> in the <strong>Grading</strong> header.</li>
+          <li>Paste into Excel (or another sheet). The clipboard uses tab-separated values.</li>
+        </ol>
+        <p>
+          Only rows that have grade data are included, along with the grade headers and
+          <code>Sum of All Grades</code> when present.
+        </p>
+      </section>
+
+      <section id="configs">
+        <h2>8. Configs</h2>
+        <p>
+          A config remembers how you set up grading for a workbook so you do not rebuild the
+          layout each time.
+        </p>
+        <p>Configs store things like:</p>
+        <ul>
+          <li>Which columns are graded or hidden (per sheet)</li>
+          <li>Current row</li>
+          <li><strong>Auto-advance row</strong></li>
+          <li>Panel widths and whether the column list or header is visible</li>
+        </ul>
+
+        <h3>8.1 Use and rename</h3>
+        <ul>
+          <li><strong>Active Config</strong>: switch among named setups for this workbook.</li>
+          <li>
+            <strong>Rename</strong>: type a new name in the rename field. Duplicate names are
+            blocked.
+          </li>
+          <li><strong>New Config</strong>: create another named setup.</li>
+        </ul>
+
+        <h3>8.2 Import and export</h3>
+        <ol>
+          <li>
+            <strong>Export Config</strong> saves the active config as a <code>.json</code> file.
+          </li>
+          <li>
+            <strong>Import Config</strong> loads a <code>.json</code> config into the current
+            workbook’s config set.
+          </li>
+        </ol>
+
+        <h3>8.3 Cleanup</h3>
+        <ol>
+          <li>Open <strong>Settings</strong>.</li>
+          <li>Select <strong>Config Cleanup</strong>.</li>
+          <li>
+            In <strong>Stored configs</strong>, delete named configs or whole stored config files
+            you no longer need.
+          </li>
+        </ol>
+        <p>
+          Config files are kept under
+          <code>%APPDATA%\xlsx_application_grader\</code> in
+          <code>native_configs</code> or <code>web_configs</code>, depending on which EXE you use.
+        </p>
+      </section>
+
+      <section id="settings">
+        <h2>9. Settings and layout</h2>
+        <p>Open the gear button in the footer for <strong>Settings</strong>.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Control</th>
+              <th>Effect</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Auto-advance row</strong></td>
+              <td>After a successful <strong>Submit all</strong>, move to the next row.</td>
+            </tr>
+            <tr>
+              <td><strong>Show hidden columns</strong></td>
+              <td>List hidden columns in <strong>Columns</strong> so you can unhide them.</td>
+            </tr>
+            <tr>
+              <td><strong>Config Cleanup</strong></td>
+              <td>Delete stored configs (see section 8).</td>
+            </tr>
+            <tr>
+              <td>Column selector toggle</td>
+              <td>Hide or show the left <strong>Columns</strong> panel.</td>
+            </tr>
+            <tr>
+              <td>Header toggle</td>
+              <td>Hide or show the top bar.</td>
+            </tr>
+            <tr>
+              <td>Theme switch</td>
+              <td>Switch between light and dark theme. The choice is remembered.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Drag the vertical resizers between panels to change the width of
+          <strong>Columns</strong> and <strong>Grading</strong>.
+        </p>
+      </section>
+
+      <section id="reference">
+        <h2>10. Quick reference</h2>
+
+        <h3>Key ideas</h3>
+        <ul>
+          <li>
+            <strong>Header row</strong>: Excel row 1. Applicant data starts at row 2.
+          </li>
+          <li>
+            <strong>Grade columns</strong>: named <code>Grade for: {header}</code>, written on
+            Submit.
+          </li>
+          <li>
+            <strong>Proxy file</strong>: graded copy under AppData; original path is not the save
+            target when opened via the app dialog.
+          </li>
+          <li>
+            <strong>Config</strong>: reusable grading layout for a workbook.
+          </li>
+        </ul>
+
+        <h3>Common mistakes</h3>
+        <ul>
+          <li>Expected the original <code>.xlsx</code> to change; grades are in <code>Grades for - …</code>.</li>
+          <li>Entered text instead of numbers; Submit requires numeric grades.</li>
+          <li>Clicked <strong>Submit all</strong> with every field empty.</li>
+          <li>Closed all web tabs and kept grading; restart the app after a disconnect banner.</li>
+          <li>Re-opened the original while an old proxy already existed, then wondered why data looked “stale.”</li>
+        </ul>
+
+        <h3>Suggested daily workflow</h3>
+        <ol>
+          <li>Start the EXE and open the application workbook.</li>
+          <li>Confirm the right <strong>Active Config</strong> (or import one).</li>
+          <li>Mark <strong>Grade</strong> columns if needed.</li>
+          <li>Score each row with <strong>Submit all</strong> (and Auto-advance if you want).</li>
+          <li>Use <strong>Copy grades</strong> or open the AppData proxy file when results are needed elsewhere.</li>
+        </ol>
+      </section>
+    </main>
+
+    <footer>
+      <p>XLSX Application Grader · User documentation</p>
+    </footer>
+  </body>
+</html>

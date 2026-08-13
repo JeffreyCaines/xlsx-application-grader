@@ -1,0 +1,4062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XLSX Application Grader</title>
+  <link rel="icon" href="favicon-light.svg" type="image/svg+xml" media="(prefers-color-scheme: light)">
+  <link rel="icon" href="favicon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon-light.svg" type="image/svg+xml">
+  <script src="vendor/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f5f7;
+      --bg-surface: #fff;
+      --bg-muted: #f4f5f7;
+      --text: #1a1a1a;
+      --text-secondary: #5c6570;
+      --text-muted: #8b95a1;
+      --text-label: #374151;
+      --border: #d8dce3;
+      --border-light: #eef1f5;
+      --border-input: #b8c0cc;
+      --btn-bg: #fff;
+      --btn-hover: #eef1f5;
+      --input-bg: #fff;
+      --input-text: #1a1a1a;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #b91c1c;
+      --warning: #b45309;
+      --success: #15803d;
+      --resizer-hover: rgba(37, 99, 235, 0.25);
+    }
+    html.theme-dark {
+      color-scheme: dark;
+      --bg: #0f1117;
+      --bg-surface: #181b24;
+      --bg-muted: #12151c;
+      --text: #e8eaed;
+      --text-secondary: #9aa3b2;
+      --text-muted: #6b7585;
+      --text-label: #c5cad3;
+      --border: #2d3340;
+      --border-light: #232833;
+      --border-input: #3d4555;
+      --btn-bg: #1e222d;
+      --btn-hover: #2a3040;
+      --input-bg: #141820;
+      --input-text: #e8eaed;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --danger: #f87171;
+      --warning: #fbbf24;
+      --success: #4ade80;
+      --resizer-hover: rgba(59, 130, 246, 0.35);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html {
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+    body {
+      margin: 0;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+      display: flex;
+      flex-direction: column;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .topbar {
+      flex-shrink: 0;
+      z-index: 10;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+    }
+    .topbar-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+      min-width: 0;
+    }
+    .topbar-legend {
+      font-size: 11px;
+      line-height: 1;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .topbar-legend-spacer {
+      visibility: hidden;
+      user-select: none;
+    }
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 31px;
+    }
+    .topbar-field-right {
+      margin-left: auto;
+    }
+    .theme-switch {
+      border: none;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      line-height: 0;
+      flex-shrink: 0;
+    }
+    .theme-switch:hover,
+    .theme-switch:focus-visible {
+      background: transparent;
+    }
+    .theme-switch-track {
+      display: block;
+      width: 44px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--border-input);
+      position: relative;
+      transition: background 0.2s ease;
+    }
+    html.theme-dark .theme-switch-track {
+      background: var(--primary);
+    }
+    .theme-switch-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+      transition: transform 0.2s ease;
+    }
+    html.theme-dark .theme-switch-thumb {
+      transform: translateX(20px);
+      color: var(--warning);
+    }
+    .theme-switch-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+    }
+    .theme-switch-icon svg {
+      display: block;
+      width: 14px;
+      height: 14px;
+    }
+    .theme-switch-icon-sun { display: none; }
+    html.theme-dark .theme-switch-icon-moon { display: none; }
+    html.theme-dark .theme-switch-icon-sun { display: flex; }
+    .icon-btn {
+      border: none;
+      background: transparent;
+      padding: 4px;
+      cursor: pointer;
+      line-height: 0;
+      flex-shrink: 0;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-btn:hover,
+    .icon-btn:focus-visible {
+      color: var(--text);
+      background: transparent;
+    }
+    .icon-btn svg {
+      display: block;
+      width: 16px;
+      height: 16px;
+    }
+    .settings-icon-dark { display: none; }
+    html.theme-dark .settings-icon-light { display: none; }
+    html.theme-dark .settings-icon-dark { display: inline-flex; }
+    .theme-trash-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+    }
+    .theme-trash-icon svg {
+      display: block;
+      width: 16px;
+      height: 16px;
+    }
+    .theme-trash-icon .trash-icon-dark { display: none; }
+    html.theme-dark .theme-trash-icon .trash-icon-light { display: none; }
+    html.theme-dark .theme-trash-icon .trash-icon-dark { display: inline-flex; }
+    .settings-menu-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .footer .settings-menu {
+      top: auto;
+      bottom: calc(100% + 8px);
+      left: 0;
+      right: auto;
+    }
+    .settings-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: max-content;
+      max-width: 92vw;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+      z-index: 20;
+      padding: 8px 0;
+    }
+    .settings-menu-action {
+      display: block;
+      width: calc(100% - 16px);
+      margin: 0 8px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .settings-menu-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .settings-menu-toggle input {
+      margin: 0;
+      flex-shrink: 0;
+    }
+    .settings-menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 4px 12px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .settings-credits-btn {
+      flex-shrink: 0;
+      margin: -2px -4px -2px 0;
+      padding: 2px 4px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+    }
+    .settings-credits-btn:hover,
+    .settings-credits-btn:focus-visible {
+      color: var(--text);
+    }
+    .settings-credits-btn svg {
+      display: block;
+      width: 16px;
+      height: 16px;
+    }
+    .settings-credits-icon-dark { display: none; }
+    html.theme-dark .settings-credits-icon-light { display: none; }
+    html.theme-dark .settings-credits-icon-dark { display: inline-flex; }
+    .settings-menu-empty {
+      margin: 0;
+      padding: 8px 12px 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .settings-config-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .settings-config-group {
+      list-style: none;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .settings-config-group:last-child {
+      border-bottom: none;
+    }
+    .settings-config-sublist {
+      list-style: none;
+      margin: 0;
+      padding: 0 0 4px;
+    }
+    .settings-config-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px 6px 12px;
+    }
+    .settings-config-item-file {
+      padding-bottom: 4px;
+    }
+    .settings-config-item-named {
+      padding-left: 28px;
+    }
+    .settings-config-item-named .settings-config-label {
+      font-size: 13px;
+      word-break: normal;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .settings-config-item:hover {
+      background: var(--bg-muted);
+    }
+    .settings-config-label {
+      flex: 1;
+      min-width: 0;
+      font-size: 12px;
+      color: var(--text);
+      word-break: break-all;
+      line-height: 1.35;
+    }
+    .settings-config-delete {
+      flex-shrink: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 4px;
+      line-height: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .settings-config-delete svg,
+    .settings-config-delete .theme-trash-icon svg {
+      display: block;
+      width: 16px;
+      height: 16px;
+    }
+    .settings-config-delete:hover {
+      color: var(--danger);
+    }
+    button, select, input[type="text"], input[type="number"], input[type="file"] {
+      font: inherit;
+      color: var(--input-text);
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border-input);
+      background: var(--btn-bg);
+      border-radius: 6px;
+      padding: 6px 12px;
+    }
+    button:hover { background: var(--btn-hover); }
+    button.primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    button.primary:hover { background: var(--primary-hover); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    select, input[type="text"], input[type="number"] {
+      border: 1px solid var(--border-input);
+      border-radius: 6px;
+      padding: 6px 8px;
+      background: var(--input-bg);
+    }
+    select.select-truncate {
+      text-overflow: ellipsis;
+      padding-right: 1.75rem;
+      vertical-align: middle;
+      max-width: 100%;
+    }
+    .status {
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      text-align: right;
+      flex-shrink: 1;
+      min-width: 0;
+    }
+    .status.dirty { color: var(--warning); font-weight: 600; }
+    .status.saved { color: var(--success); }
+    .server-disconnect-banner {
+      flex-shrink: 0;
+      background: #b91c1c;
+      color: #fff;
+      padding: 8px 16px;
+      font-size: 13px;
+      text-align: center;
+    }
+    .server-disconnect-banner.hidden { display: none; }
+    .footer {
+      flex-shrink: 0;
+      position: relative;
+      z-index: 10;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border);
+      padding: 6px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      min-height: 28px;
+    }
+    .footer-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .main {
+      flex: 1 1 0;
+      min-height: 0;
+      width: 100%;
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    .sidebar {
+      width: 420px;
+      flex-shrink: 0;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--bg-muted);
+      border-right: 1px solid var(--border);
+      padding: 16px 0 0 16px;
+      overflow: hidden;
+    }
+    .panel-resizer {
+      position: absolute;
+      top: 0;
+      width: 16px;
+      height: 100%;
+      cursor: col-resize;
+      z-index: 2;
+    }
+    .sidebar-resizer {
+      right: -8px;
+    }
+    .columns-panel-resizer {
+      left: -8px;
+    }
+    .panel-resizer:hover {
+      background: var(--resizer-hover);
+    }
+    .panel-resizer.panel-resizer-active {
+      background: var(--resizer-hover);
+    }
+    body.col-resize-active {
+      cursor: col-resize;
+      user-select: none;
+    }
+    .sidebar-scroll,
+    .panel-columns-scroll,
+    .panel-grading-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+    }
+    .panel-columns-scroll {
+      padding-bottom: 10px;
+    }
+    .panel-grading-scroll {
+      padding-bottom: 12px;
+    }
+    .sidebar-scroll .empty-msg,
+    .panel-columns-scroll .empty-msg {
+      padding-right: 16px;
+    }
+    .column-list { list-style: none; margin: 0; padding: 0; }
+    .column-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 8px 12px 8px 0;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 13px;
+    }
+    .column-item label {
+      flex: 1;
+      min-width: 0;
+      line-height: 1.4;
+      word-break: break-word;
+      white-space: normal;
+    }
+    .column-item .col-idx { color: var(--text-muted); font-size: 11px; width: 24px; flex-shrink: 0; padding-top: 2px; }
+    .column-item .toggle-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+      align-items: flex-end;
+    }
+    .column-item .toggle-pair {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .column-item .col-delete {
+      flex-shrink: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 4px;
+      line-height: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .column-item .col-delete svg,
+    .column-item .col-delete .theme-trash-icon svg {
+      display: block;
+    }
+    .column-item .col-delete:hover {
+      color: var(--danger);
+    }
+    .column-item .col-delete.col-unhide:hover {
+      color: var(--success);
+    }
+    .column-item.column-item-hidden label {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    .panels {
+      flex: 1;
+      display: flex;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      align-items: stretch;
+    }
+    .panel-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+      overflow: hidden;
+      align-self: stretch;
+    }
+    .panel-shell-grading {
+      flex: 0 0 var(--grading-panel-width, 300px);
+      max-width: var(--grading-panel-width, 300px);
+      background: var(--bg-muted);
+      border-right: 1px solid var(--border);
+    }
+    .panel-shell-columns {
+      flex: 1 1 280px;
+      min-width: 280px;
+      position: relative;
+      background: var(--bg-muted);
+    }
+    .panel-columns {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 0 0 16px;
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+      min-height: 31px;
+      padding-right: 16px;
+    }
+    .panel-header h2 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 31px;
+      height: 31px;
+      flex-shrink: 0;
+    }
+    .panel-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      min-height: 31px;
+      flex-shrink: 0;
+      justify-content: flex-start;
+    }
+    .panel-grading .panel-header {
+      padding-right: 0;
+    }
+    .panel-grading {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 16px 16px 0;
+      overflow: hidden;
+      background: var(--bg-muted);
+    }
+    .panel-columns-scroll .field-cards {
+      padding-right: 16px;
+    }
+    .auto-advance-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #btn-submit-all { font-size: 12px; padding: 5px 10px; }
+    #btn-copy-grades {
+      font-size: 12px;
+      padding: 5px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #btn-copy-grades .btn-icon svg { display: block; }
+    .row-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .row-nav input[type="number"] { width: 72px; }
+    .field-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .field-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .field-card .label {
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--text-label);
+      margin-bottom: 6px;
+      word-break: break-word;
+      white-space: normal;
+    }
+    .field-card .value {
+      font-size: 15px;
+      word-break: break-word;
+    }
+    .field-card-sum {
+      border-color: var(--accent, #2d6cdf);
+      background: var(--bg-accent-soft, rgba(45, 108, 223, 0.08));
+    }
+    .field-card-sum .value {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .field-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .field-card-header .label {
+      margin-bottom: 0;
+      flex: 1;
+      min-width: 0;
+    }
+    .field-card-delete {
+      flex-shrink: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 4px;
+      line-height: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .field-card-delete svg,
+    .field-card-delete .theme-trash-icon svg {
+      display: block;
+      width: 16px;
+      height: 16px;
+    }
+    .field-card-delete:hover:not(:disabled) {
+      color: var(--danger);
+    }
+    .grade-form {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    #grade-forms .grade-form:last-child {
+      margin-bottom: 0;
+    }
+    .grade-form h3 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      line-height: 1.4;
+      word-break: break-word;
+      white-space: normal;
+    }
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .form-row label { font-size: 12px; color: var(--text-secondary); }
+    .form-row input { width: 100%; }
+    .form-error {
+      color: var(--danger);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    .form-error.form-success { color: var(--success); }
+    .empty-msg {
+      color: var(--text-secondary);
+      font-style: italic;
+      padding: 0;
+      margin: 0;
+    }
+    .config-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .config-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      min-height: 31px;
+    }
+    #file-select { min-width: 160px; max-width: 280px; width: 280px; }
+    #sheet-select { min-width: 120px; max-width: 200px; width: 200px; }
+    #config-select { min-width: 140px; max-width: 220px; width: 220px; }
+    #btn-rename-config {
+      padding: 6px;
+      line-height: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #btn-rename-config svg {
+      display: block;
+      width: 16px;
+      height: 16px;
+    }
+    #config-rename-modal .modal-field,
+    #config-create-modal .modal-field {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0 0 16px;
+    }
+    .hidden { display: none !important; }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(15, 17, 23, 0.55);
+    }
+    .modal-overlay.hidden { display: none !important; }
+    .modal-dialog {
+      width: min(100%, 480px);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 22px 18px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+    }
+    .modal-dialog h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .modal-dialog p {
+      margin: 0 0 10px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+    .modal-path {
+      font-size: 12px;
+      color: var(--text-muted);
+      word-break: break-all;
+      margin-bottom: 16px !important;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    #author-credits-modal .modal-dialog {
+      text-align: center;
+    }
+    #author-credits-modal .modal-actions {
+      justify-content: center;
+    }
+    #author-credits-modal a,
+    #author-credits-modal a:visited {
+      color: var(--primary);
+    }
+    #author-credits-modal a:hover,
+    #author-credits-modal a:focus-visible {
+      color: var(--primary-hover);
+    }
+    .modal-dialog-cleanup {
+      width: min(100%, 480px);
+      max-height: min(80vh, 560px);
+      display: flex;
+      flex-direction: column;
+    }
+    .config-cleanup-body {
+      flex: 1;
+      min-height: 0;
+      max-height: min(50vh, 420px);
+      overflow: auto;
+      margin: 0 0 16px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+    }
+    .config-cleanup-body .settings-menu-empty {
+      padding: 12px;
+    }
+    #file-input { display: none; }
+  </style>
+</head>
+<body>
+  <header id="app-header" class="topbar">
+    <div class="topbar-field">
+      <span class="topbar-legend topbar-legend-spacer" aria-hidden="true">File</span>
+      <div class="topbar-brand">
+        <button id="btn-open" type="button">Open .xlsx</button>
+        <button id="btn-close-file" type="button" class="hidden" disabled title="Close file">Close</button>
+      </div>
+    </div>
+    <input id="file-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple>
+    <div id="file-field" class="topbar-field hidden">
+      <label class="topbar-legend" for="file-select">File</label>
+      <select id="file-select" class="select-truncate" title="Open workbooks"></select>
+    </div>
+    <div id="sheet-field" class="topbar-field hidden">
+      <label class="topbar-legend" for="sheet-select">Sheet</label>
+      <select id="sheet-select" class="select-truncate" title="Active sheet"></select>
+    </div>
+    <div class="config-row">
+      <div class="topbar-field">
+        <label class="topbar-legend" for="config-select">Active Config</label>
+        <select id="config-select" class="select-truncate" disabled title="Saved configs for this workbook"></select>
+      </div>
+      <div class="config-actions">
+        <button id="btn-rename-config" type="button" disabled title="Rename config" aria-label="Rename config" aria-haspopup="dialog" aria-controls="config-rename-modal">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
+          </svg>
+        </button>
+        <button id="btn-new-config" type="button" disabled aria-haspopup="dialog" aria-controls="config-create-modal">New Config</button>
+        <button id="btn-import-config" type="button" disabled>Import Config</button>
+        <button id="btn-export-config" type="button" disabled>Export Config</button>
+        <input id="config-import-input" type="file" accept=".json,application/json" class="hidden">
+      </div>
+    </div>
+  </header>
+
+  <div id="server-disconnect-banner" class="server-disconnect-banner hidden" role="alert">
+    Server connection lost. Changes will not be saved until you restart the application.
+  </div>
+
+  <div id="main" class="main">
+    <aside id="sidebar" class="sidebar">
+      <div class="panel-header">
+        <h2>Columns</h2>
+      </div>
+      <div class="sidebar-scroll">
+        <p id="columns-empty" class="empty-msg">Open a workbook to get started.</p>
+        <ul id="column-list" class="column-list"></ul>
+      </div>
+      <div id="sidebar-resizer" class="panel-resizer sidebar-resizer" title="Drag to resize"></div>
+    </aside>
+
+    <div id="panels" class="panels">
+      <div id="grading-panel-shell" class="panel-shell panel-shell-grading">
+        <section class="panel-grading">
+          <div class="panel-header">
+            <h2>Grading</h2>
+            <div class="panel-header-actions">
+              <button id="btn-copy-grades" type="button" class="hidden" disabled title="Copy grade columns for Excel paste">
+                <span id="copy-grades-icon" class="btn-icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/>
+                  </svg>
+                </span>
+                Copy grades
+              </button>
+              <button id="btn-submit-all" type="button" class="primary hidden">Submit all</button>
+            </div>
+          </div>
+          <div class="panel-grading-scroll">
+            <div id="grade-forms"></div>
+            <p id="grades-empty" class="empty-msg">Open a workbook to get started.</p>
+            <p id="submit-all-status" class="form-error hidden"></p>
+          </div>
+        </section>
+      </div>
+
+      <div id="columns-panel-shell" class="panel-shell panel-shell-columns">
+        <div id="columns-panel-resizer" class="panel-resizer columns-panel-resizer" title="Drag to resize"></div>
+        <section class="panel-columns">
+          <div class="panel-header">
+            <h2>Current row</h2>
+            <div id="row-nav" class="row-nav panel-header-actions hidden">
+              <button id="btn-prev" type="button">Prev</button>
+              <label>Row <input id="current-row-input" type="number" min="2" value="2"></label>
+              <button id="btn-next" type="button">Next</button>
+            </div>
+          </div>
+          <div class="panel-columns-scroll">
+            <div id="field-cards" class="field-cards"></div>
+            <p id="fields-empty" class="empty-msg">Open a workbook to get started.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-controls">
+      <div class="settings-menu-wrap">
+        <button id="btn-settings" type="button" class="icon-btn" title="Settings" aria-haspopup="true" aria-expanded="false" aria-controls="settings-menu">
+          <span class="settings-icon settings-icon-light" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+              <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
+              <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/>
+            </svg>
+          </span>
+          <span class="settings-icon settings-icon-dark" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+              <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+            </svg>
+          </span>
+        </button>
+        <div id="settings-menu" class="settings-menu hidden" role="menu" aria-label="Settings">
+          <div class="settings-menu-header">
+            <span>Settings</span>
+            <button id="btn-author-credits" type="button" class="settings-credits-btn" title="Author Credits" aria-label="Author Credits">
+              <span class="settings-credits-icon settings-credits-icon-light" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                  <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                </svg>
+              </span>
+              <span class="settings-credits-icon settings-credits-icon-dark" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle-fill" viewBox="0 0 16 16">
+                  <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/>
+                </svg>
+              </span>
+            </button>
+          </div>
+          <label class="settings-menu-toggle" for="auto-advance-row">
+            <input id="auto-advance-row" type="checkbox">
+            Auto-advance row
+          </label>
+          <label class="settings-menu-toggle" for="show-hidden-columns">
+            <input id="show-hidden-columns" type="checkbox">
+            Show hidden columns
+          </label>
+          <button id="btn-config-cleanup" type="button" class="settings-menu-action" aria-haspopup="dialog" aria-controls="config-cleanup-modal">
+            Config Cleanup
+          </button>
+        </div>
+      </div>
+      <button id="btn-column-selector" type="button" class="icon-btn" title="Hide column selector" aria-pressed="true" aria-label="Hide column selector">
+        <span class="column-selector-icon column-selector-icon-visible" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-bar-left" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M12.5 15a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5M10 8a.5.5 0 0 1-.5.5H3.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L3.707 7.5H9.5a.5.5 0 0 1 .5.5"/>
+          </svg>
+        </span>
+        <span class="column-selector-icon column-selector-icon-hidden hidden" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-bar-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8m-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5"/>
+          </svg>
+        </span>
+      </button>
+      <button id="btn-header-toggle" type="button" class="icon-btn" title="Hide header" aria-pressed="true" aria-label="Hide header">
+        <span class="header-toggle-icon header-toggle-icon-visible" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-bar-up" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M8 10a.5.5 0 0 0 .5-.5V3.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 3.707V9.5a.5.5 0 0 0 .5.5m-7 2.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5"/>
+          </svg>
+        </span>
+        <span class="header-toggle-icon header-toggle-icon-hidden hidden" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-bar-down" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M1 3.5a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1-.5-.5M8 6a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 .708-.708L7.5 12.293V6.5A.5.5 0 0 1 8 6"/>
+          </svg>
+        </span>
+      </button>
+      <button id="dark-theme" type="button" class="theme-switch" role="switch" aria-checked="false" title="Switch to dark theme">
+        <span class="theme-switch-track">
+          <span class="theme-switch-thumb">
+            <span class="theme-switch-icon theme-switch-icon-moon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278M4.858 1.311A7.27 7.27 0 0 0 1.025 7.71c0 4.02 3.279 7.276 7.319 7.276a7.32 7.32 0 0 0 5.205-2.162q-.506.063-1.029.063c-4.61 0-8.343-3.714-8.343-8.29 0-1.167.242-2.278.681-3.286"/>
+              </svg>
+            </span>
+            <span class="theme-switch-icon theme-switch-icon-sun" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"/>
+              </svg>
+            </span>
+          </span>
+        </span>
+      </button>
+    </div>
+    <span id="status" class="status">No file loaded</span>
+  </footer>
+
+  <div id="author-credits-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="author-credits-modal-title">
+    <div class="modal-dialog">
+      <h2 id="author-credits-modal-title">Author Credits</h2>
+      <p>Jeffrey Caines</p>
+      <p>Student Team Coordinator</p>
+      <p>HSTIP (Co-op) 2026</p>
+      <p><a href="https://jeffreycaines.dev" target="_blank">jeffreycaines.dev</a></p>
+      <p><a href="https://linkedin.com/in/jcaines7" target="_blank">LinkedIn</a> | <a href="https://github.com/jeffreycaines" target="_blank">GitHub</a></p>
+      <div class="modal-actions">
+        <button id="author-credits-modal-close" type="button" class="primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="config-cleanup-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="config-cleanup-modal-title">
+    <div class="modal-dialog modal-dialog-cleanup">
+      <h2 id="config-cleanup-modal-title">Stored configs</h2>
+      <div class="config-cleanup-body">
+        <p id="settings-config-empty" class="settings-menu-empty hidden">No stored configs.</p>
+        <ul id="settings-config-list" class="settings-config-list"></ul>
+      </div>
+      <div class="modal-actions">
+        <button id="config-cleanup-modal-close" type="button" class="primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="config-rename-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="config-rename-modal-title">
+    <div class="modal-dialog">
+      <h2 id="config-rename-modal-title">Rename config</h2>
+      <input id="config-rename-input" class="modal-field" type="text" autocomplete="off" spellcheck="false" aria-label="Config name">
+      <div class="modal-actions">
+        <button id="config-rename-modal-cancel" type="button">Cancel</button>
+        <button id="config-rename-modal-confirm" type="button" class="primary">Rename</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="config-create-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="config-create-modal-title">
+    <div class="modal-dialog">
+      <h2 id="config-create-modal-title">New config</h2>
+      <input id="config-create-input" class="modal-field" type="text" autocomplete="off" spellcheck="false" aria-label="Config name">
+      <div class="modal-actions">
+        <button id="config-create-modal-cancel" type="button">Cancel</button>
+        <button id="config-create-modal-confirm" type="button" class="primary">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_SIDEBAR_WIDTH = 420;
+    const MIN_SIDEBAR_WIDTH = 260;
+    const MAX_SIDEBAR_WIDTH = 720;
+    const DEFAULT_GRADING_PANEL_WIDTH = 300;
+    const MIN_GRADING_PANEL_WIDTH = 220;
+    const MIN_COLUMNS_PANEL_WIDTH = 280;
+    const CONFIG_BASE_NAME = "default";
+    const GRADE_COL_PREFIX = "Grade for: ";
+    const SUM_COL_NAME = "Sum of All Grades";
+    const NO_WORKBOOK_EMPTY_MSG = "Open a workbook to get started.";
+    const WS_TOKEN_KEY = "xlsx_grader_ws_token";
+    const LAUNCHER_TAB_KEY = "xlsx_grader_launcher_tab_id";
+    const WS_RECONNECT_MS = 2000;
+    const openWorkbooks = new Map();
+
+    const state = {
+      activeWorkbookKey: null,
+      configBundle: null,
+      workbook: null,
+      fileName: "",
+      filePath: null,
+      fileHandle: null,
+      workbookTitle: "",
+      sheetName: "",
+      headers: [],
+      originalHeaders: [],
+      hiddenColumns: new Set(),
+      gradedColumns: new Set(),
+      activeConfigName: CONFIG_BASE_NAME,
+      currentRow: 2,
+      autoAdvanceRow: false,
+      sidebarWidth: DEFAULT_SIDEBAR_WIDTH,
+      gradingPanelWidth: DEFAULT_GRADING_PANEL_WIDTH,
+      darkTheme: false,
+      showColumnSelector: true,
+      showHeader: true,
+      showHiddenColumns: false,
+      dirty: false,
+      saveDebounce: null,
+      configRenameDebounce: null,
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function syncThemeSwitch(enabled) {
+      const btn = $("dark-theme");
+      btn.setAttribute("aria-checked", enabled ? "true" : "false");
+      btn.title = enabled ? "Switch to light theme" : "Switch to dark theme";
+    }
+
+    function applyDarkTheme(enabled, options = {}) {
+      const { save = true } = options;
+      state.darkTheme = !!enabled;
+      document.documentElement.classList.toggle("theme-dark", state.darkTheme);
+      syncThemeSwitch(state.darkTheme);
+      if (save) void saveUserTheme(state.darkTheme);
+    }
+
+    function systemPrefersDark() {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+
+    async function loadUserConfig() {
+      const api = getAppApi();
+      if (!api?.read_user_config) return {};
+      try {
+        const raw = await api.read_user_config();
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+
+    async function saveUserTheme(enabled) {
+      const api = getAppApi();
+      if (!api?.write_user_config) return;
+      const existing = await loadUserConfig();
+      const payload = JSON.stringify({ ...existing, dark_theme: !!enabled });
+      await api.write_user_config(payload);
+    }
+
+    async function initTheme() {
+      let dark = null;
+      if (hasAppBackend()) {
+        const userConfig = await loadUserConfig();
+        if (userConfig.dark_theme !== undefined && userConfig.dark_theme !== null) {
+          dark = !!userConfig.dark_theme;
+        }
+      }
+      if (dark === null) {
+        if (isNativeApp()) {
+          try {
+            dark = !!(await window.pywebview.api.system_prefers_dark());
+          } catch {
+            dark = systemPrefersDark();
+          }
+        } else if (isWebServer()) {
+          dark = false;
+        } else {
+          dark = systemPrefersDark();
+        }
+      }
+      applyDarkTheme(dark, { save: false });
+    }
+
+    function bootTheme() {
+      if (isNativeApp()) {
+        onNativeReady(() => void initTheme());
+      } else if (isWebServer()) {
+        onAppReady(() => void initTheme());
+      } else {
+        void initTheme();
+      }
+    }
+
+    function resetSubmitStatus(el) {
+      el.classList.add("hidden");
+      el.textContent = "";
+      el.classList.remove("form-success");
+    }
+
+    function sanitizeKey(name) {
+      return String(name).replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 120);
+    }
+
+    function getWorkbookFileName(filePath = state.filePath, fileName = state.fileName) {
+      if (fileName) return fileName;
+      if (filePath) return filePath.split(/[/\\]/).pop() || filePath;
+      return "untitled";
+    }
+
+    function getWorkbookKey(filePath = state.filePath, fileName = state.fileName) {
+      if (filePath && isNativeApp()) return sanitizeKey(filePath);
+      return sanitizeKey(getWorkbookFileName(filePath, fileName));
+    }
+
+    function isNativeApp() {
+      return !!(window.pywebview?.api?.read_config_bundle);
+    }
+
+    function isWebServer() {
+      if (isNativeApp()) return false;
+      const host = location.hostname;
+      return (
+        (location.protocol === "http:" || location.protocol === "https:")
+        && (host === "127.0.0.1" || host === "localhost")
+      );
+    }
+
+    function hasAppBackend() {
+      return isNativeApp() || isWebServer();
+    }
+
+    function getAppApi() {
+      if (isNativeApp()) return window.pywebview.api;
+      if (isWebServer()) return webServerApi;
+      return null;
+    }
+
+    const webServerApi = {
+      async read_config_bundle(workbookKey) {
+        const res = await fetch(`/api/config-bundle/${encodeURIComponent(workbookKey)}`);
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error(`Failed to read config (${res.status})`);
+        return await res.text();
+      },
+      async write_config_bundle(workbookKey, content) {
+        const res = await fetch(`/api/config-bundle/${encodeURIComponent(workbookKey)}`, {
+          method: "PUT",
+          body: content,
+        });
+        if (!res.ok) throw new Error(`Failed to write config (${res.status})`);
+        return true;
+      },
+      async list_config_bundles() {
+        const res = await fetch("/api/config-bundles");
+        if (!res.ok) throw new Error(`Failed to list configs (${res.status})`);
+        return await res.json();
+      },
+      async delete_config_bundle(workbookKey) {
+        const res = await fetch(`/api/config-bundle/${encodeURIComponent(workbookKey)}`, {
+          method: "DELETE",
+        });
+        if (res.status === 404) return false;
+        if (!res.ok) throw new Error(`Failed to delete config (${res.status})`);
+        return true;
+      },
+      async read_app_state() {
+        const res = await fetch("/api/app-state");
+        if (!res.ok) throw new Error(`Failed to read app state (${res.status})`);
+        return await res.text();
+      },
+      async write_app_state(content) {
+        const res = await fetch("/api/app-state", { method: "PUT", body: content });
+        if (!res.ok) throw new Error(`Failed to write app state (${res.status})`);
+        return true;
+      },
+      async read_user_config() {
+        const res = await fetch("/api/user-config");
+        if (!res.ok) throw new Error(`Failed to read user config (${res.status})`);
+        return await res.text();
+      },
+      async write_user_config(content) {
+        const res = await fetch("/api/user-config", { method: "PUT", body: content });
+        if (!res.ok) throw new Error(`Failed to write user config (${res.status})`);
+        return true;
+      },
+      async file_exists(path) {
+        const res = await fetch(`/api/file/exists?path=${encodeURIComponent(path)}`);
+        if (!res.ok) throw new Error(`Failed to check file (${res.status})`);
+        const data = await res.json();
+        return !!data.exists;
+      },
+      async grade_proxy_path(name) {
+        const res = await fetch(`/api/proxy-path?name=${encodeURIComponent(name)}`);
+        if (!res.ok) throw new Error(`Failed to resolve proxy path (${res.status})`);
+        const data = await res.json();
+        return data.path;
+      },
+      async open_xlsx_files() {
+        const res = await fetch("/api/files/open", { method: "POST" });
+        if (!res.ok) throw new Error(`Failed to open files (${res.status})`);
+        const data = await res.json();
+        return data.paths || [];
+      },
+      async read_file_bytes(path) {
+        const res = await fetch(`/api/file/bytes?path=${encodeURIComponent(path)}`);
+        if (!res.ok) throw new Error(`Failed to read file (${res.status})`);
+        const data = await res.json();
+        return data.content_b64;
+      },
+      async write_file_bytes(path, content_b64) {
+        const res = await fetch("/api/file/bytes", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path, content_b64 }),
+        });
+        if (!res.ok) throw new Error(`Failed to write file (${res.status})`);
+        return true;
+      },
+      async save_config_file(suggestedName, content) {
+        const res = await fetch("/api/config/save-file", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ suggested_name: suggestedName, content }),
+        });
+        if (!res.ok) throw new Error(`Failed to export config (${res.status})`);
+        const data = await res.json();
+        return !!data.saved;
+      },
+    };
+
+    const webLifecycleState = {
+      ws: null,
+      reconnectTimer: null,
+      wasConnected: false,
+      lostConnection: false,
+    };
+
+    function showServerDisconnectBanner() {
+      $("server-disconnect-banner")?.classList.remove("hidden");
+    }
+
+    function hideServerDisconnectBanner() {
+      $("server-disconnect-banner")?.classList.add("hidden");
+    }
+
+    async function discoverWebSessionToken() {
+      try {
+        const res = await fetch("/api/lifecycle/status", { cache: "no-store" });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (data?.token) {
+          localStorage.setItem(WS_TOKEN_KEY, data.token);
+          return data.token;
+        }
+      } catch {
+        /* server not reachable */
+      }
+      return null;
+    }
+
+    function connectLifecycleWebSocket(token) {
+      if (webLifecycleState.ws) {
+        const previous = webLifecycleState.ws;
+        previous.__graderIntentionalClose = true;
+        try {
+          previous.close();
+        } catch {
+          /* ignore */
+        }
+        webLifecycleState.ws = null;
+      }
+      clearTimeout(webLifecycleState.reconnectTimer);
+
+      const wsProto = location.protocol === "https:" ? "wss:" : "ws:";
+      const tabId = sessionStorage.getItem("xlsx_grader_tab_id");
+      const role = localStorage.getItem(LAUNCHER_TAB_KEY) === tabId ? "launcher" : "client";
+      const wsUrl =
+        `${wsProto}//${location.host}/ws/lifecycle?token=${encodeURIComponent(token)}&role=${encodeURIComponent(role)}`;
+
+      let ws;
+      try {
+        ws = new WebSocket(wsUrl);
+      } catch {
+        scheduleWebLifecycleReconnect(token);
+        return;
+      }
+
+      webLifecycleState.ws = ws;
+
+      ws.addEventListener("open", () => {
+        webLifecycleState.wasConnected = true;
+        if (role === "client") {
+          void restoreSessionFromServer();
+        }
+        if (webLifecycleState.lostConnection) {
+          webLifecycleState.lostConnection = false;
+          hideServerDisconnectBanner();
+          alert("Connection to the grading server was restored. You can save changes again.");
+        }
+      });
+
+      ws.addEventListener("close", () => {
+        if (webLifecycleState.ws === ws) {
+          webLifecycleState.ws = null;
+        }
+        if (ws.__graderIntentionalClose) {
+          return;
+        }
+        if (!webLifecycleState.wasConnected) {
+          scheduleWebLifecycleReconnect(token);
+          return;
+        }
+        if (!webLifecycleState.lostConnection) {
+          webLifecycleState.lostConnection = true;
+          showServerDisconnectBanner();
+          alert(
+            "Connection to the grading server was lost. Further changes will not be saved. Restart the application.",
+          );
+        }
+        scheduleWebLifecycleReconnect(localStorage.getItem(WS_TOKEN_KEY) || token);
+      });
+
+      ws.addEventListener("error", () => {
+        try {
+          ws.close();
+        } catch {
+          /* ignore */
+        }
+      });
+    }
+
+    function scheduleWebLifecycleReconnect(token) {
+      clearTimeout(webLifecycleState.reconnectTimer);
+      webLifecycleState.reconnectTimer = setTimeout(() => {
+        void ensureWebLifecycleConnection(token);
+      }, WS_RECONNECT_MS);
+    }
+
+    async function ensureWebLifecycleConnection(token) {
+      let activeToken = token || localStorage.getItem(WS_TOKEN_KEY);
+      if (!activeToken) {
+        activeToken = await discoverWebSessionToken();
+      }
+      if (!activeToken) {
+        scheduleWebLifecycleReconnect(null);
+        return;
+      }
+      connectLifecycleWebSocket(activeToken);
+    }
+
+    function initWebLifecycle() {
+      if (isNativeApp()) return;
+
+      const params = new URLSearchParams(location.search);
+      const urlLauncher = params.get("launcher");
+      let tabId = sessionStorage.getItem("xlsx_grader_tab_id");
+      if (!tabId) {
+        tabId = crypto.randomUUID();
+        sessionStorage.setItem("xlsx_grader_tab_id", tabId);
+      }
+
+      if (urlLauncher) {
+        localStorage.setItem(WS_TOKEN_KEY, urlLauncher);
+        localStorage.setItem(LAUNCHER_TAB_KEY, tabId);
+        const cleanUrl = new URL(location.href);
+        cleanUrl.searchParams.delete("launcher");
+        const next = cleanUrl.pathname + cleanUrl.search + cleanUrl.hash;
+        const current = location.pathname + location.search + location.hash;
+        if (next !== current) {
+          history.replaceState(null, "", next || cleanUrl.pathname);
+        }
+      }
+
+      void ensureWebLifecycleConnection(urlLauncher || localStorage.getItem(WS_TOKEN_KEY));
+    }
+
+    function isLauncherTab() {
+      const tabId = sessionStorage.getItem("xlsx_grader_tab_id");
+      return !!tabId && localStorage.getItem(LAUNCHER_TAB_KEY) === tabId;
+    }
+
+    function arrayBufferToBase64(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
+    function base64ToArrayBuffer(b64) {
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+
+    function cloneConfigBundle(bundle) {
+      return bundle ? JSON.parse(JSON.stringify(bundle)) : null;
+    }
+
+    function captureCurrentSession() {
+      return {
+        workbook: state.workbook,
+        fileName: state.fileName,
+        filePath: state.filePath,
+        fileHandle: state.fileHandle,
+        workbookTitle: state.workbookTitle,
+        sheetName: state.sheetName,
+        activeConfigName: state.activeConfigName,
+        currentRow: state.currentRow,
+        autoAdvanceRow: state.autoAdvanceRow,
+        sidebarWidth: state.sidebarWidth,
+        gradingPanelWidth: state.gradingPanelWidth,
+        showColumnSelector: state.showColumnSelector,
+        showHeader: state.showHeader,
+        showHiddenColumns: state.showHiddenColumns,
+        dirty: state.dirty,
+        hiddenColumns: new Set(state.hiddenColumns),
+        gradedColumns: new Set(state.gradedColumns),
+        originalHeaders: state.originalHeaders,
+        configBundle: cloneConfigBundle(state.configBundle),
+      };
+    }
+
+    function restoreSession(session) {
+      state.workbook = session.workbook;
+      state.fileName = session.fileName;
+      state.filePath = session.filePath;
+      state.fileHandle = session.fileHandle;
+      state.workbookTitle = session.workbookTitle;
+      state.sheetName = session.sheetName;
+      state.activeConfigName = session.activeConfigName;
+      state.currentRow = session.currentRow;
+      state.autoAdvanceRow = session.autoAdvanceRow;
+      state.sidebarWidth = session.sidebarWidth;
+      state.gradingPanelWidth = session.gradingPanelWidth;
+      state.showColumnSelector = session.showColumnSelector ?? true;
+      state.showHeader = session.showHeader ?? true;
+      state.showHiddenColumns = session.showHiddenColumns ?? false;
+      state.dirty = session.dirty;
+      state.hiddenColumns = new Set(session.hiddenColumns || []);
+      state.gradedColumns = new Set(session.gradedColumns);
+      state.originalHeaders = session.originalHeaders || [];
+      state.configBundle = cloneConfigBundle(session.configBundle);
+      state.headers = readHeaders(getSheet());
+    }
+
+    function syncSelectTitle(select) {
+      const opt = select.selectedOptions[0];
+      select.title = opt ? opt.textContent : "";
+    }
+
+    function refreshFileSelect() {
+      const select = $("file-select");
+      const field = $("file-field");
+      select.innerHTML = "";
+      if (!openWorkbooks.size) {
+        field.classList.add("hidden");
+        return;
+      }
+      field.classList.remove("hidden");
+      for (const [key, session] of openWorkbooks) {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = session.fileName;
+        opt.selected = key === state.activeWorkbookKey;
+        select.appendChild(opt);
+      }
+      if (state.activeWorkbookKey) {
+        select.value = state.activeWorkbookKey;
+      }
+      syncSelectTitle(select);
+    }
+
+    function col1ToLetter(col1) {
+      return XLSX.utils.encode_col(col1 - 1);
+    }
+
+    function formatColumnDisplay(header) {
+      if (!header) return "";
+      return String(header.label || "").trim();
+    }
+
+    function getSheet() {
+      if (!state.workbook || !state.sheetName) return null;
+      return state.workbook.Sheets[state.sheetName];
+    }
+
+    function getWorkbookTitle() {
+      if (!state.workbook) return state.fileName || "untitled";
+      const props = state.workbook.Props || {};
+      return props.Title || props.Subject || state.sheetName || state.fileName || "untitled";
+    }
+
+    function readHeaders(sheet) {
+      if (!sheet || !sheet["!ref"]) return [];
+      const range = XLSX.utils.decode_range(sheet["!ref"]);
+      const headers = [];
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const ref = XLSX.utils.encode_cell({ r: range.s.r, c });
+        const cell = sheet[ref];
+        const label = cell ? String(cell.w ?? cell.v ?? "").trim() : "";
+        headers.push({ index1: c + 1, index0: c, label });
+      }
+      return headers;
+    }
+
+    function getColumnSelectorHeaders() {
+      const headers = state.headers.filter(
+        (h) => !isGradeColumnLabel(h.label) && !isSumColumnLabel(h.label),
+      );
+      if (state.showHiddenColumns) return headers;
+      return headers.filter((h) => !state.hiddenColumns.has(h.index1));
+    }
+
+    function getRowReadoutColumns() {
+      return state.headers
+        .filter(
+          (h) =>
+            !state.hiddenColumns.has(h.index1) &&
+            !isGradeColumnLabel(h.label) &&
+            !isSumColumnLabel(h.label),
+        )
+        .map((h) => h.index1);
+    }
+
+    function getDataRowRange() {
+      const sheet = getSheet();
+      if (!sheet || !sheet["!ref"]) return { min: 2, max: 2 };
+      const range = XLSX.utils.decode_range(sheet["!ref"]);
+      return { min: range.s.r + 2, max: range.e.r + 1 };
+    }
+
+    function clampRow(row) {
+      const { min, max } = getDataRowRange();
+      return Math.max(min, Math.min(max, row));
+    }
+
+    function getCellValue(sheet, row1, col1) {
+      const ref = XLSX.utils.encode_cell({ r: row1 - 1, c: col1 - 1 });
+      const cell = sheet[ref];
+      if (!cell) return "";
+      return cell.w ?? cell.v ?? "";
+    }
+
+    function setCellValue(sheet, row1, col1, value) {
+      const ref = XLSX.utils.encode_cell({ r: row1 - 1, c: col1 - 1 });
+      if (typeof value === "number" && !Number.isNaN(value)) {
+        sheet[ref] = { t: "n", v: value };
+      } else {
+        const str = String(value);
+        const num = Number(str);
+        if (str !== "" && !Number.isNaN(num) && String(num) === str) {
+          sheet[ref] = { t: "n", v: num };
+        } else {
+          sheet[ref] = { t: "s", v: str };
+        }
+      }
+      expandSheetRange(sheet, row1 - 1, col1 - 1);
+    }
+
+    function clearCellValue(sheet, row1, col1) {
+      const ref = XLSX.utils.encode_cell({ r: row1 - 1, c: col1 - 1 });
+      delete sheet[ref];
+    }
+
+    function expandSheetRange(sheet, r, c) {
+      const ref = sheet["!ref"];
+      if (!ref) {
+        sheet["!ref"] = XLSX.utils.encode_range({ s: { r, c }, e: { r, c } });
+        return;
+      }
+      const range = XLSX.utils.decode_range(ref);
+      if (r < range.s.r) range.s.r = r;
+      if (c < range.s.c) range.s.c = c;
+      if (r > range.e.r) range.e.r = r;
+      if (c > range.e.c) range.e.c = c;
+      sheet["!ref"] = XLSX.utils.encode_range(range);
+    }
+
+    function isGradeColumnLabel(label) {
+      return String(label || "").startsWith(GRADE_COL_PREFIX);
+    }
+
+    function gradeColumnNameFor(label) {
+      return GRADE_COL_PREFIX + String(label || "").trim();
+    }
+
+    function snapshotOriginalHeaders() {
+      state.originalHeaders = Object.freeze(
+        state.headers.map((h) => Object.freeze({ ...h })),
+      );
+    }
+
+    function ensureGradeColumnsForSheet() {
+      const sheet = getSheet();
+      if (!sheet) return false;
+      let created = false;
+      const sources = state.headers.filter(
+        (h) => h.label && !isGradeColumnLabel(h.label) && !isSumColumnLabel(h.label),
+      );
+      for (const src of sources) {
+        const targetName = gradeColumnNameFor(src.label);
+        const exists = state.headers.some((h) => h.label.trim() === targetName);
+        if (exists) continue;
+        let maxCol0 = 0;
+        if (sheet["!ref"]) {
+          maxCol0 = XLSX.utils.decode_range(sheet["!ref"]).e.c;
+        }
+        const newCol0 = maxCol0 + 1;
+        const headerRef = XLSX.utils.encode_cell({ r: 0, c: newCol0 });
+        sheet[headerRef] = { t: "s", v: targetName };
+        expandSheetRange(sheet, 0, newCol0);
+        state.headers = readHeaders(sheet);
+        created = true;
+      }
+      return created;
+    }
+
+    function getGradeTargetCol1(sourceCol1) {
+      const header = state.headers.find((h) => h.index1 === sourceCol1);
+      if (!header || isGradeColumnLabel(header.label)) return sourceCol1;
+      const targetName = gradeColumnNameFor(header.label);
+      const target = state.headers.find((h) => h.label.trim() === targetName);
+      return target ? target.index1 : sourceCol1;
+    }
+
+    function isSumColumnLabel(label) {
+      return String(label || "").trim() === SUM_COL_NAME;
+    }
+
+    function getGradeColumnHeaders() {
+      return state.headers
+        .filter((h) => isGradeColumnLabel(h.label))
+        .sort((a, b) => a.index1 - b.index1);
+    }
+
+    function getPopulatedGradeColumnHeaders(sheet, row1) {
+      return getGradeColumnHeaders().filter((header) => {
+        const value = getCellValue(sheet, row1, header.index1);
+        return String(value ?? "").trim() !== "";
+      });
+    }
+
+    function findSumColumnHeader() {
+      return state.headers.find((h) => isSumColumnLabel(h.label)) || null;
+    }
+
+    function ensureSumColumnForSheet() {
+      const sheet = getSheet();
+      if (!sheet) return false;
+      if (findSumColumnHeader()) return false;
+      const gradeCols = getGradeColumnHeaders();
+      if (!gradeCols.length) return false;
+      const maxGradeCol0 = Math.max(...gradeCols.map((h) => h.index0));
+      const newCol0 = maxGradeCol0 + 1;
+      const headerRef = XLSX.utils.encode_cell({ r: 0, c: newCol0 });
+      sheet[headerRef] = { t: "s", v: SUM_COL_NAME };
+      expandSheetRange(sheet, 0, newCol0);
+      state.headers = readHeaders(sheet);
+      return true;
+    }
+
+    function getCellNumber(sheet, row1, col1) {
+      const ref = XLSX.utils.encode_cell({ r: row1 - 1, c: col1 - 1 });
+      const cell = sheet[ref];
+      if (!cell || cell.v == null) return null;
+      if (typeof cell.v === "number") return cell.v;
+      const n = Number(String(cell.v).trim());
+      return Number.isNaN(n) ? null : n;
+    }
+
+    function computeRowGradeSum(sheet, row1) {
+      let sum = 0;
+      let count = 0;
+      for (const h of getGradeColumnHeaders()) {
+        const n = getCellNumber(sheet, row1, h.index1);
+        if (n !== null) {
+          sum += n;
+          count++;
+        }
+      }
+      return { sum, count };
+    }
+
+    function updateRowSumCell(sheet, row1) {
+      const sumHeader = findSumColumnHeader();
+      if (!sumHeader) return;
+      const gradeCols = getGradeColumnHeaders();
+      const ref = XLSX.utils.encode_cell({ r: row1 - 1, c: sumHeader.index0 });
+      const { sum } = computeRowGradeSum(sheet, row1);
+      if (gradeCols.length) {
+        const refs = gradeCols.map((h) =>
+          XLSX.utils.encode_cell({ r: row1 - 1, c: h.index0 }),
+        );
+        sheet[ref] = { t: "n", v: sum, f: `SUM(${refs.join(",")})` };
+      } else {
+        sheet[ref] = { t: "n", v: sum };
+      }
+      expandSheetRange(sheet, row1 - 1, sumHeader.index0);
+    }
+
+    function createTrashIcon() {
+      const wrap = document.createElement("span");
+      wrap.className = "theme-trash-icon";
+      wrap.innerHTML =
+        '<span class="trash-icon-light" aria-hidden="true">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">' +
+        '<path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>' +
+        '<path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>' +
+        "</svg></span>" +
+        '<span class="trash-icon-dark" aria-hidden="true">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">' +
+        '<path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>' +
+        "</svg></span>";
+      return wrap;
+    }
+
+    function createHideColumnIcon() {
+      const wrap = document.createElement("span");
+      wrap.className = "theme-trash-icon";
+      wrap.innerHTML =
+        '<span class="trash-icon-light" aria-hidden="true">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-slash" viewBox="0 0 16 16">' +
+        '<path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7 7 0 0 0-2.79.588l.77.771A6 6 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755q-.247.248-.517.486z"/>' +
+        '<path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829"/>' +
+        '<path d="M3.35 5.47q-.27.24-.518.487A13 13 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7 7 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12z"/>' +
+        "</svg></span>" +
+        '<span class="trash-icon-dark" aria-hidden="true">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-slash-fill" viewBox="0 0 16 16">' +
+        '<path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7 7 0 0 0 2.79-.588M5.21 3.088A7 7 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-2.062-2.062a3.5 3.5 0 0 0-4.474-4.474z"/>' +
+        '<path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 6-12-12 .708-.708 12 12z"/>' +
+        "</svg></span>";
+      return wrap;
+    }
+
+    function createUnhideColumnIcon() {
+      const wrap = document.createElement("span");
+      wrap.className = "theme-trash-icon";
+      wrap.innerHTML =
+        '<span class="trash-icon-light" aria-hidden="true">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">' +
+        '<path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/>' +
+        '<path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/>' +
+        "</svg></span>" +
+        '<span class="trash-icon-dark" aria-hidden="true">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16">' +
+        '<path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/>' +
+        '<path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/>' +
+        "</svg></span>";
+      return wrap;
+    }
+
+    const COPY_GRADES_ICON_HTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16">' +
+      '<path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/>' +
+      "</svg>";
+    const COPY_GRADES_CHECK_HTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">' +
+      '<path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/>' +
+      "</svg>";
+    let copyGradesIconTimer = null;
+
+    function flashCopyGradesIcon() {
+      const el = $("copy-grades-icon");
+      if (!el) return;
+      clearTimeout(copyGradesIconTimer);
+      el.innerHTML = COPY_GRADES_CHECK_HTML;
+      copyGradesIconTimer = setTimeout(() => {
+        el.innerHTML = COPY_GRADES_ICON_HTML;
+      }, 1500);
+    }
+
+    function getMainWidth() {
+      return $("main")?.clientWidth || document.documentElement.clientWidth;
+    }
+
+    function maxSidebarWidth() {
+      const mainWidth = getMainWidth();
+      const roomForPanels = mainWidth - MIN_GRADING_PANEL_WIDTH - MIN_COLUMNS_PANEL_WIDTH;
+      return Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, roomForPanels));
+    }
+
+    function applySidebarWidth(width) {
+      if (!state.showColumnSelector) {
+        layoutGradingPanel();
+        return;
+      }
+      const prevSidebarWidth = state.sidebarWidth;
+      state.sidebarWidth = Math.max(MIN_SIDEBAR_WIDTH, Math.min(maxSidebarWidth(), width));
+      $("sidebar").style.width = state.sidebarWidth + "px";
+      const sidebarDelta = prevSidebarWidth - state.sidebarWidth;
+      applyGradingPanelWidth(state.gradingPanelWidth + sidebarDelta);
+    }
+
+    function updateColumnSelectorToggleUI() {
+      const btn = $("btn-column-selector");
+      if (!btn) return;
+      const visible = state.showColumnSelector;
+      const label = visible ? "Hide column selector" : "Show column selector";
+      btn.title = label;
+      btn.setAttribute("aria-label", label);
+      btn.setAttribute("aria-pressed", visible ? "true" : "false");
+      btn.querySelector(".column-selector-icon-visible")?.classList.toggle("hidden", !visible);
+      btn.querySelector(".column-selector-icon-hidden")?.classList.toggle("hidden", visible);
+    }
+
+    function applyColumnSelectorVisibility(visible = state.showColumnSelector, options = {}) {
+      const { save = false } = options;
+      state.showColumnSelector = !!visible;
+      $("sidebar").classList.toggle("hidden", !state.showColumnSelector);
+      updateColumnSelectorToggleUI();
+      if (state.showColumnSelector) {
+        applySidebarWidth(state.sidebarWidth);
+      } else {
+        layoutGradingPanel();
+      }
+      if (save) scheduleAutoSave();
+    }
+
+    function initColumnSelectorPreference() {
+      applyColumnSelectorVisibility(true, { save: false });
+    }
+
+    function initColumnSelectorToggle() {
+      $("btn-column-selector").addEventListener("click", () => {
+        applyColumnSelectorVisibility(!state.showColumnSelector, { save: true });
+      });
+    }
+
+    function updateHeaderToggleUI() {
+      const btn = $("btn-header-toggle");
+      if (!btn) return;
+      const visible = state.showHeader;
+      const label = visible ? "Hide header" : "Show header";
+      btn.title = label;
+      btn.setAttribute("aria-label", label);
+      btn.setAttribute("aria-pressed", visible ? "true" : "false");
+      btn.querySelector(".header-toggle-icon-visible")?.classList.toggle("hidden", !visible);
+      btn.querySelector(".header-toggle-icon-hidden")?.classList.toggle("hidden", visible);
+    }
+
+    function applyHeaderVisibility(visible = state.showHeader, options = {}) {
+      const { save = false } = options;
+      state.showHeader = !!visible;
+      $("app-header").classList.toggle("hidden", !state.showHeader);
+      updateHeaderToggleUI();
+      if (save) scheduleAutoSave();
+    }
+
+    function initHeaderPreference() {
+      applyHeaderVisibility(true, { save: false });
+    }
+
+    function initHeaderToggle() {
+      $("btn-header-toggle").addEventListener("click", () => {
+        applyHeaderVisibility(!state.showHeader, { save: true });
+      });
+    }
+
+    function getMaxGradingPanelWidth(panelsWidth = $("panels")?.clientWidth || 0) {
+      return Math.max(0, panelsWidth - MIN_COLUMNS_PANEL_WIDTH);
+    }
+
+    function isCurrentRowAtMaxWidth() {
+      const panelsWidth = $("panels")?.clientWidth || 0;
+      if (panelsWidth <= 0) return false;
+      const visiblePanelsWidth = state.showColumnSelector
+        ? panelsWidth
+        : panelsWidth - state.sidebarWidth;
+      const maxGrading = getMaxGradingPanelWidth(visiblePanelsWidth);
+      const effectiveMin = Math.min(MIN_GRADING_PANEL_WIDTH, maxGrading);
+      return state.gradingPanelWidth <= effectiveMin;
+    }
+
+    function applyGradingPanelWidth(width, options = {}) {
+      const { updateState = true } = options;
+      const max = getMaxGradingPanelWidth();
+      const effectiveMin = Math.min(MIN_GRADING_PANEL_WIDTH, max);
+      const clamped = Math.max(effectiveMin, Math.min(max, width));
+      if (updateState) state.gradingPanelWidth = clamped;
+      const px = clamped + "px";
+      const shell = $("grading-panel-shell");
+      shell.style.flexBasis = px;
+      shell.style.maxWidth = px;
+      shell.style.minWidth = px;
+    }
+
+    function layoutGradingPanel() {
+      if (state.showColumnSelector) {
+        applyGradingPanelWidth(state.gradingPanelWidth);
+      } else if (isCurrentRowAtMaxWidth()) {
+        // Row readout already fills available space; let it reclaim the sidebar width on hide.
+        applyGradingPanelWidth(state.gradingPanelWidth, { updateState: false });
+      } else {
+        // Grow grading into the hidden sidebar space so the row readout width stays put.
+        applyGradingPanelWidth(state.gradingPanelWidth + state.sidebarWidth, { updateState: false });
+      }
+    }
+
+    function getGradingPanelLayoutWidth() {
+      const shell = $("grading-panel-shell");
+      if (!shell) return state.gradingPanelWidth;
+      const rendered = shell.getBoundingClientRect().width;
+      return rendered > 0 ? rendered : state.gradingPanelWidth;
+    }
+
+    function configNameSort(a, b) {
+      if (a === CONFIG_BASE_NAME) return -1;
+      if (b === CONFIG_BASE_NAME) return 1;
+      const na = /^default \((\d+)\)$/.exec(a);
+      const nb = /^default \((\d+)\)$/.exec(b);
+      if (na && nb) return parseInt(na[1], 10) - parseInt(nb[1], 10);
+      return a.localeCompare(b);
+    }
+
+    function nextDerivedConfigName(baseName, existingNames) {
+      if (!existingNames.includes(baseName)) return baseName;
+      let n = 1;
+      while (existingNames.includes(`${baseName} (${n})`)) n++;
+      return `${baseName} (${n})`;
+    }
+
+    function nextConfigName(existingNames) {
+      return nextDerivedConfigName(CONFIG_BASE_NAME, existingNames);
+    }
+
+    function emptySheetSettings() {
+      return {
+        current_row: clampRow(2),
+        hidden_columns: [],
+        graded_columns: [],
+      };
+    }
+
+    function emptyConfig(configName) {
+      return {
+        workbook: state.workbookTitle,
+        config_name: configName,
+        auto_advance_row: false,
+        sidebar_width: DEFAULT_SIDEBAR_WIDTH,
+        grading_panel_width: DEFAULT_GRADING_PANEL_WIDTH,
+        show_column_selector: state.showColumnSelector,
+        show_header: state.showHeader,
+        sheets: {},
+      };
+    }
+
+    function normalizeConfig(cfg) {
+      if (!cfg?.sheets || typeof cfg.sheets !== "object") {
+        return emptyConfig(cfg?.config_name || state.activeConfigName || CONFIG_BASE_NAME);
+      }
+      return cfg;
+    }
+
+    function getCurrentSheetSettings() {
+      return {
+        current_row: state.currentRow,
+        hidden_columns: [...state.hiddenColumns].sort((a, b) => a - b),
+        graded_columns: [...state.gradedColumns].sort((a, b) => a - b),
+      };
+    }
+
+    function applySheetSettings(sheetSettings) {
+      const settings = sheetSettings || emptySheetSettings();
+      state.hiddenColumns = new Set(settings.hidden_columns || []);
+      state.gradedColumns = new Set(
+        (settings.graded_columns || []).filter((c) => !state.hiddenColumns.has(c)),
+      );
+      state.currentRow = clampRow(settings.current_row || 2);
+    }
+
+    function parseConfigBundleRaw(raw) {
+      if (!raw) return null;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.configs && typeof parsed.configs === "object") return parsed;
+        return null;
+      } catch {
+        return null;
+      }
+    }
+
+    async function readConfigBundleRawFromStore(workbookKey) {
+      const api = getAppApi();
+      if (!api) return null;
+      return await api.read_config_bundle(workbookKey);
+    }
+
+    async function loadConfigBundleFromStore(workbookKey) {
+      const raw = await readConfigBundleRawFromStore(workbookKey);
+      return parseConfigBundleRaw(raw);
+    }
+
+    function loadConfigBundle() {
+      return state.configBundle;
+    }
+
+    async function persistConfigBundle(bundle, workbookKey = getWorkbookKey()) {
+      if (bundle && "platform" in bundle) delete bundle.platform;
+      state.configBundle = bundle;
+      const json = JSON.stringify(bundle);
+      const api = getAppApi();
+      if (api) {
+        await api.write_config_bundle(workbookKey, json);
+      }
+    }
+
+    function parseNativeAppState(raw) {
+      if (!raw) return { open_file_paths: [], active_file_path: null };
+      try {
+        const parsed = JSON.parse(raw);
+        const paths = Array.isArray(parsed.open_file_paths)
+          ? parsed.open_file_paths.filter((p) => typeof p === "string" && p)
+          : [];
+        const active = typeof parsed.active_file_path === "string" ? parsed.active_file_path : null;
+        return { open_file_paths: paths, active_file_path: active };
+      } catch {
+        return { open_file_paths: [], active_file_path: null };
+      }
+    }
+
+    async function loadNativeAppState() {
+      if (isNativeApp()) {
+        const raw = await window.pywebview.api.read_app_state();
+        return parseNativeAppState(raw);
+      }
+      const api = getAppApi();
+      if (!api) return { open_file_paths: [], active_file_path: null };
+      const raw = await api.read_app_state();
+      return parseNativeAppState(raw);
+    }
+
+    async function saveNativeAppState() {
+      const paths = [];
+      for (const session of openWorkbooks.values()) {
+        if (session.filePath) paths.push(session.filePath);
+      }
+      const appState = {
+        open_file_paths: paths,
+        active_file_path: state.filePath || null,
+      };
+      const payload = JSON.stringify(appState);
+      if (isNativeApp()) {
+        await window.pywebview.api.write_app_state(payload);
+        return;
+      }
+      const api = getAppApi();
+      if (!api) return;
+      await api.write_app_state(payload);
+    }
+
+    async function removePathFromNativeAppState(filePath) {
+      if (!filePath) return;
+      const appState = await loadNativeAppState();
+      appState.open_file_paths = appState.open_file_paths.filter((p) => p !== filePath);
+      if (appState.active_file_path === filePath) {
+        appState.active_file_path = state.filePath || null;
+      }
+      const payload = JSON.stringify(appState);
+      if (isNativeApp()) {
+        await window.pywebview.api.write_app_state(payload);
+        return;
+      }
+      const api = getAppApi();
+      if (!api) return;
+      await api.write_app_state(payload);
+    }
+
+    async function openOriginalAsProxy(originalPath, originalBuffer) {
+      const originalName = originalPath.split(/[/\\]/).pop() || "workbook.xlsx";
+      const api = getAppApi();
+      if (!api?.grade_proxy_path) {
+        await addWorkbookFromBuffer(originalBuffer, originalName, originalPath, null);
+        return;
+      }
+      const proxyPath = await api.grade_proxy_path(originalName);
+      if (!(await api.file_exists(proxyPath))) {
+        await api.write_file_bytes(proxyPath, arrayBufferToBase64(originalBuffer));
+      }
+      const proxyB64 = await api.read_file_bytes(proxyPath);
+      const proxyBuffer = base64ToArrayBuffer(proxyB64);
+      const proxyName = proxyPath.split(/[/\\]/).pop() || "workbook.xlsx";
+      await addWorkbookFromBuffer(proxyBuffer, proxyName, proxyPath, null);
+    }
+
+    async function tryOpenFileAtPath(path) {
+      if (!path) return false;
+      try {
+        const api = getAppApi();
+        if (!api) return false;
+        const exists = await api.file_exists(path);
+        if (!exists) return false;
+        const b64 = await api.read_file_bytes(path);
+        const buffer = base64ToArrayBuffer(b64);
+        const fileName = path.split(/[/\\]/).pop() || "workbook.xlsx";
+        await addWorkbookFromBuffer(buffer, fileName, path, null);
+        return true;
+      } catch (err) {
+        console.error("Failed to open file at path:", path, err);
+        return false;
+      }
+    }
+
+    async function restoreOpenFilesFromAppState() {
+      if (!isNativeApp() && !isWebServer()) return;
+      try {
+      const appState = await loadNativeAppState();
+      if (!appState.open_file_paths.length) return;
+
+      for (const path of appState.open_file_paths) {
+        const loaded = await tryOpenFileAtPath(path);
+        if (!loaded) {
+          await removePathFromNativeAppState(path);
+        }
+      }
+
+      if (appState.active_file_path) {
+        const activeKey = getWorkbookKey(
+          appState.active_file_path,
+          getWorkbookFileName(appState.active_file_path),
+        );
+        if (openWorkbooks.has(activeKey)) {
+          if (activeKey === state.activeWorkbookKey) {
+            await loadInitialConfigForWorkbook();
+            refreshConfigSelect();
+            renderAll();
+          } else {
+            await switchToWorkbook(activeKey);
+          }
+        }
+      }
+      } catch (err) {
+        console.error("Failed to restore app session:", err);
+      }
+    }
+
+    async function restoreSessionFromServer() {
+      if (!isWebServer() || isLauncherTab()) return;
+      if (openWorkbooks.size > 0) return;
+      await restoreOpenFilesFromAppState();
+    }
+
+    function onNativeReady(fn) {
+      if (window.pywebview?.api?.read_app_state) {
+        fn();
+      } else {
+        window.addEventListener("pywebviewready", () => fn(), { once: true });
+      }
+    }
+
+    function onAppReady(fn) {
+      if (isWebServer()) {
+        fn();
+      }
+    }
+
+    async function listStoredConfigBundles() {
+      const api = getAppApi();
+      if (!api?.list_config_bundles) return [];
+      const items = await api.list_config_bundles();
+      return items.sort((a, b) => a.file_path.localeCompare(b.file_path, undefined, { sensitivity: "base" }));
+    }
+
+    async function deleteNamedConfigFromStoredBundle(workbookKey, configName) {
+      let bundle;
+      if (state.activeWorkbookKey === workbookKey && state.configBundle) {
+        if (state.workbook) {
+          saveCurrentConfigToBundle(state.configBundle);
+        }
+        bundle = cloneConfigBundle(state.configBundle);
+      } else {
+        bundle = await loadConfigBundleFromStore(workbookKey);
+      }
+      if (!bundle?.configs?.[configName]) return;
+
+      delete bundle.configs[configName];
+      const remaining = Object.keys(bundle.configs).sort(configNameSort);
+
+      if (!remaining.length) {
+        await deleteStoredConfigBundle(workbookKey);
+        setStatus(`Deleted config "${configName}"`, "saved");
+        return;
+      }
+
+      if (bundle.active_config === configName) {
+        bundle.active_config = remaining[0];
+      }
+
+      await persistConfigBundle(bundle, workbookKey);
+
+      for (const [key, session] of openWorkbooks) {
+        if (key === workbookKey) {
+          session.configBundle = cloneConfigBundle(bundle);
+          if (session.activeConfigName === configName) {
+            session.activeConfigName = bundle.active_config;
+          }
+          openWorkbooks.set(key, session);
+        }
+      }
+
+      if (state.activeWorkbookKey === workbookKey) {
+        state.configBundle = cloneConfigBundle(bundle);
+        state.activeConfigName = bundle.active_config;
+        clearTimeout(state.configRenameDebounce);
+        applyConfig(bundle.configs[bundle.active_config]);
+        refreshConfigSelect();
+        renderAll();
+      }
+
+      setStatus(`Deleted config "${configName}"`, "saved");
+    }
+
+    async function deleteStoredConfigBundle(workbookKey) {
+      const api = getAppApi();
+      if (api) {
+        await api.delete_config_bundle(workbookKey);
+      }
+
+      for (const [key, session] of openWorkbooks) {
+        if (key === workbookKey) {
+          session.configBundle = null;
+          openWorkbooks.set(key, session);
+        }
+      }
+
+      if (state.activeWorkbookKey === workbookKey) {
+        state.configBundle = null;
+        if (state.workbook) {
+          await loadInitialConfigForWorkbook();
+          refreshConfigSelect();
+          renderAll();
+        }
+      }
+    }
+
+    function setSettingsMenuOpen(open) {
+      const menu = $("settings-menu");
+      const btn = $("btn-settings");
+      menu.classList.toggle("hidden", !open);
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    function setConfigCleanupOpen(open) {
+      const overlay = $("config-cleanup-modal");
+      const btn = $("btn-config-cleanup");
+      if (!overlay) return;
+      overlay.classList.toggle("hidden", !open);
+      if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open) {
+        void renderSettingsConfigList();
+        const closeBtn = $("config-cleanup-modal-close");
+        if (closeBtn) closeBtn.focus();
+      }
+    }
+
+    async function renderSettingsConfigList() {
+      const list = $("settings-config-list");
+      const empty = $("settings-config-empty");
+      list.innerHTML = "";
+
+      let items = [];
+      try {
+        items = await listStoredConfigBundles();
+      } catch (err) {
+        console.error(err);
+        setStatus("Could not load stored configs: " + err.message);
+      }
+
+      empty.classList.toggle("hidden", items.length > 0);
+      for (const item of items) {
+        const group = document.createElement("li");
+        group.className = "settings-config-group";
+
+        const fileRow = document.createElement("div");
+        fileRow.className = "settings-config-item settings-config-item-file";
+        const fileLabel = document.createElement("div");
+        fileLabel.className = "settings-config-label";
+        const filePath = item.file_path || item.filename || item.workbook_key;
+        fileLabel.title = filePath;
+        fileLabel.textContent = filePath;
+        fileRow.appendChild(fileLabel);
+
+        const fileDeleteBtn = document.createElement("button");
+        fileDeleteBtn.type = "button";
+        fileDeleteBtn.className = "settings-config-delete";
+        fileDeleteBtn.title = "Delete stored config file";
+        fileDeleteBtn.setAttribute("aria-label", `Delete stored config file at ${filePath}`);
+        fileDeleteBtn.appendChild(createTrashIcon());
+        fileDeleteBtn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          if (!confirm(`Delete all stored configs for this file?\n\n${filePath}`)) return;
+          try {
+            await deleteStoredConfigBundle(item.workbook_key);
+            await renderSettingsConfigList();
+            setStatus("Deleted stored config file", "saved");
+          } catch (err) {
+            console.error(err);
+            setStatus("Delete failed: " + err.message);
+          }
+        });
+        fileRow.appendChild(fileDeleteBtn);
+        group.appendChild(fileRow);
+
+        const sublist = document.createElement("ul");
+        sublist.className = "settings-config-sublist";
+        const configNames = [...(item.config_names || [])].sort(configNameSort);
+        for (const configName of configNames) {
+          const subItem = document.createElement("li");
+          subItem.className = "settings-config-item settings-config-item-named";
+
+          const labelWrap = document.createElement("div");
+          labelWrap.className = "settings-config-label";
+          labelWrap.title = configName;
+          labelWrap.textContent = configName;
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.type = "button";
+          deleteBtn.className = "settings-config-delete";
+          deleteBtn.title = "Delete config";
+          deleteBtn.setAttribute("aria-label", `Delete config ${configName}`);
+          deleteBtn.appendChild(createTrashIcon());
+          deleteBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            if (!confirm(`Delete config "${configName}"?`)) return;
+            try {
+              await deleteNamedConfigFromStoredBundle(item.workbook_key, configName);
+              await renderSettingsConfigList();
+            } catch (err) {
+              console.error(err);
+              setStatus("Delete failed: " + err.message);
+            }
+          });
+
+          subItem.appendChild(labelWrap);
+          subItem.appendChild(deleteBtn);
+          sublist.appendChild(subItem);
+        }
+        group.appendChild(sublist);
+        list.appendChild(group);
+      }
+    }
+
+    function initSettingsMenu() {
+      const btn = $("btn-settings");
+      const cleanupBtn = $("btn-config-cleanup");
+      const wrap = btn.closest(".settings-menu-wrap");
+      const cleanupOverlay = $("config-cleanup-modal");
+      const cleanupCloseBtn = $("config-cleanup-modal-close");
+
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const menu = $("settings-menu");
+        const willOpen = menu.classList.contains("hidden");
+        setSettingsMenuOpen(willOpen);
+      });
+
+      cleanupBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setSettingsMenuOpen(false);
+        setConfigCleanupOpen(true);
+      });
+
+      if (cleanupCloseBtn) {
+        cleanupCloseBtn.addEventListener("click", () => setConfigCleanupOpen(false));
+      }
+
+      if (cleanupOverlay) {
+        cleanupOverlay.addEventListener("click", (e) => {
+          if (e.target === cleanupOverlay) setConfigCleanupOpen(false);
+        });
+      }
+
+      document.addEventListener("click", (e) => {
+        if (!wrap.contains(e.target)) setSettingsMenuOpen(false);
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        if (cleanupOverlay && !cleanupOverlay.classList.contains("hidden")) {
+          setConfigCleanupOpen(false);
+          return;
+        }
+        setSettingsMenuOpen(false);
+      });
+    }
+
+    function setAuthorCreditsOpen(open) {
+      const overlay = $("author-credits-modal");
+      if (!overlay) return;
+      overlay.classList.toggle("hidden", !open);
+      if (open) {
+        const closeBtn = $("author-credits-modal-close");
+        if (closeBtn) closeBtn.focus();
+      }
+    }
+
+    function initAuthorCredits() {
+      const btn = $("btn-author-credits");
+      const overlay = $("author-credits-modal");
+      const closeBtn = $("author-credits-modal-close");
+      if (!btn || !overlay || !closeBtn) return;
+
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setSettingsMenuOpen(false);
+        setAuthorCreditsOpen(true);
+      });
+
+      closeBtn.addEventListener("click", () => setAuthorCreditsOpen(false));
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) setAuthorCreditsOpen(false);
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !overlay.classList.contains("hidden")) {
+          setAuthorCreditsOpen(false);
+        }
+      });
+    }
+
+    function saveConfigBundle(bundle) {
+      state.configBundle = bundle;
+      void persistConfigBundle(bundle).catch((err) => {
+        console.error("Config save failed:", err);
+        setStatus("Config save failed: " + err.message);
+      });
+    }
+
+    function ensureConfigBundle() {
+      if (!state.configBundle) {
+        state.configBundle = {
+          active_config: CONFIG_BASE_NAME,
+          configs: {},
+        };
+      }
+      return state.configBundle;
+    }
+
+    function refreshConfigSelect() {
+      const select = $("config-select");
+      const bundle = loadConfigBundle();
+      const names = bundle ? Object.keys(bundle.configs).sort(configNameSort) : [];
+      const active = state.activeConfigName || bundle?.active_config || CONFIG_BASE_NAME;
+
+      select.innerHTML = "";
+      if (!names.length) {
+        const opt = document.createElement("option");
+        opt.value = CONFIG_BASE_NAME;
+        opt.textContent = CONFIG_BASE_NAME;
+        opt.selected = active === CONFIG_BASE_NAME;
+        select.appendChild(opt);
+      } else {
+        for (const name of names) {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          opt.selected = name === active;
+          select.appendChild(opt);
+        }
+      }
+
+      if ([...select.options].some((opt) => opt.value === active)) {
+        select.value = active;
+      } else if (select.options.length) {
+        select.value = select.options[0].value;
+      }
+      state.activeConfigName = select.value || CONFIG_BASE_NAME;
+      syncSelectTitle(select);
+    }
+
+    function saveCurrentConfigToBundle(bundle) {
+      if (!state.workbookTitle) return;
+      const name = state.activeConfigName || bundle.active_config || CONFIG_BASE_NAME;
+      const cfg = buildConfig(name);
+      bundle.configs[name] = cfg;
+      bundle.active_config = name;
+    }
+
+    function buildConfig(configName) {
+      const name = configName || state.activeConfigName || CONFIG_BASE_NAME;
+      const existing = state.configBundle?.configs?.[name];
+      const cfg = normalizeConfig(
+        existing ? { ...existing, config_name: name } : emptyConfig(name),
+      );
+      const sheetName = state.sheetName || "";
+      cfg.workbook = state.workbookTitle;
+      cfg.config_name = name;
+      cfg.auto_advance_row = state.autoAdvanceRow;
+      cfg.sidebar_width = state.sidebarWidth;
+      cfg.grading_panel_width = state.gradingPanelWidth;
+      cfg.show_column_selector = state.showColumnSelector;
+      cfg.show_header = state.showHeader;
+      cfg.sheets = { ...cfg.sheets };
+      cfg.sheets[sheetName] = getCurrentSheetSettings();
+      return cfg;
+    }
+
+    function applyConfig(cfg) {
+      if (!cfg) return;
+      const normalized = normalizeConfig(cfg);
+      if (normalized.config_name) state.activeConfigName = normalized.config_name;
+      state.autoAdvanceRow = !!normalized.auto_advance_row;
+      $("auto-advance-row").checked = state.autoAdvanceRow;
+      if (normalized.sidebar_width) applySidebarWidth(normalized.sidebar_width);
+      if (normalized.grading_panel_width) applyGradingPanelWidth(normalized.grading_panel_width);
+      if (normalized.show_column_selector !== undefined) {
+        applyColumnSelectorVisibility(!!normalized.show_column_selector, { save: false });
+      }
+      if (normalized.show_header !== undefined) {
+        applyHeaderVisibility(!!normalized.show_header, { save: false });
+      }
+      state.headers = readHeaders(getSheet());
+      const sheetName = state.sheetName || "";
+      applySheetSettings(normalized.sheets?.[sheetName] || null);
+      refreshConfigSelect();
+      renderAll();
+    }
+
+    function switchSheet(sheetName) {
+      if (!state.workbook?.SheetNames?.includes(sheetName)) return;
+      const bundle = ensureConfigBundle();
+      saveCurrentConfigToBundle(bundle);
+      saveConfigBundle(bundle);
+      state.sheetName = sheetName;
+      state.headers = readHeaders(getSheet());
+      const cfg = normalizeConfig(bundle.configs[state.activeConfigName]);
+      applySheetSettings(cfg.sheets?.[sheetName] || null);
+      $("sheet-select").value = sheetName;
+      syncSelectTitle($("sheet-select"));
+      if (state.activeWorkbookKey && openWorkbooks.has(state.activeWorkbookKey)) {
+        openWorkbooks.set(state.activeWorkbookKey, captureCurrentSession());
+      }
+      renderAll();
+    }
+
+    async function flushActiveWorkbook() {
+      if (!state.activeWorkbookKey || !state.workbook) return;
+      if (!openWorkbooks.has(state.activeWorkbookKey)) return;
+      clearTimeout(state.configRenameDebounce);
+      persistConfigRename();
+      const bundle = ensureConfigBundle();
+      saveCurrentConfigToBundle(bundle);
+      await persistConfigBundle(bundle, state.activeWorkbookKey);
+      openWorkbooks.set(state.activeWorkbookKey, captureCurrentSession());
+    }
+
+    function persistActiveConfig() {
+      if (!state.workbookTitle) return;
+      const bundle = ensureConfigBundle();
+      saveCurrentConfigToBundle(bundle);
+      saveConfigBundle(bundle);
+      if (state.activeWorkbookKey && openWorkbooks.has(state.activeWorkbookKey)) {
+        openWorkbooks.set(state.activeWorkbookKey, captureCurrentSession());
+      }
+    }
+
+    function saveConfig(options = {}) {
+      const { requireNonEmptyName = false, nameFromInput = null } = options;
+      if (!state.workbookTitle) return true;
+      const source = nameFromInput != null
+        ? nameFromInput
+        : (state.activeConfigName || CONFIG_BASE_NAME);
+      const trimmed = String(source).trim();
+      if (!trimmed) {
+        if (requireNonEmptyName) {
+          return false;
+        }
+      }
+      const bundle = ensureConfigBundle();
+      const oldName = state.activeConfigName || bundle.active_config || CONFIG_BASE_NAME;
+      const newName = trimmed || CONFIG_BASE_NAME;
+
+      if (newName !== oldName && bundle.configs[newName]) {
+        setStatus(`Config "${newName}" already exists.`);
+        return false;
+      }
+
+      const cfg = buildConfig(newName);
+      if (oldName !== newName && bundle.configs[oldName]) {
+        delete bundle.configs[oldName];
+      }
+      bundle.configs[newName] = cfg;
+      bundle.active_config = newName;
+      state.activeConfigName = newName;
+      saveConfigBundle(bundle);
+      refreshConfigSelect();
+      return true;
+    }
+
+    function persistConfigRename() {
+      return saveConfig({ requireNonEmptyName: true });
+    }
+
+    function switchToConfig(name) {
+      if (!state.workbookTitle || !name) return;
+      clearTimeout(state.configRenameDebounce);
+      const bundle = ensureConfigBundle();
+      saveCurrentConfigToBundle(bundle);
+      const cfg = bundle.configs[name] || emptyConfig(name);
+      bundle.active_config = name;
+      state.activeConfigName = name;
+      bundle.configs[name] = cfg;
+      saveConfigBundle(bundle);
+      applyConfig(cfg);
+    }
+
+    function createNewConfig() {
+      if (!state.workbookTitle) return;
+      setConfigCreateOpen(true);
+    }
+
+    function setConfigCreateOpen(open) {
+      const overlay = $("config-create-modal");
+      if (!overlay) return;
+      overlay.classList.toggle("hidden", !open);
+      if (open) {
+        const bundle = ensureConfigBundle();
+        const input = $("config-create-input");
+        input.value = nextConfigName(Object.keys(bundle.configs || {}));
+        input.focus();
+        input.select();
+      }
+    }
+
+    function confirmConfigCreate() {
+      if (!state.workbookTitle) return;
+      const input = $("config-create-input");
+      const newName = input.value.trim();
+      if (!newName) {
+        input.focus();
+        input.select();
+        return;
+      }
+
+      clearTimeout(state.configRenameDebounce);
+      const bundle = ensureConfigBundle();
+      if (bundle.configs[newName]) {
+        setStatus(`Config "${newName}" already exists.`);
+        input.focus();
+        input.select();
+        return;
+      }
+
+      saveCurrentConfigToBundle(bundle);
+      const cfg = emptyConfig(newName);
+      bundle.configs[newName] = cfg;
+      bundle.active_config = newName;
+      state.activeConfigName = newName;
+      saveConfigBundle(bundle);
+      applyConfig(cfg);
+      setConfigCreateOpen(false);
+      setStatus(`Created config "${newName}"`, "saved");
+    }
+
+    function initConfigCreate() {
+      const btn = $("btn-new-config");
+      const overlay = $("config-create-modal");
+      const input = $("config-create-input");
+      const cancelBtn = $("config-create-modal-cancel");
+      const confirmBtn = $("config-create-modal-confirm");
+      if (!btn || !overlay || !input || !cancelBtn || !confirmBtn) return;
+
+      cancelBtn.addEventListener("click", () => setConfigCreateOpen(false));
+      confirmBtn.addEventListener("click", confirmConfigCreate);
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          confirmConfigCreate();
+        }
+      });
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) setConfigCreateOpen(false);
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !overlay.classList.contains("hidden")) {
+          setConfigCreateOpen(false);
+        }
+      });
+    }
+
+    async function exportCurrentConfig() {
+      if (!state.workbookTitle) return;
+      clearTimeout(state.configRenameDebounce);
+      if (!persistConfigRename()) return;
+
+      const cfg = buildConfig();
+      const json = JSON.stringify(cfg, null, 2);
+      const fileName = `${sanitizeKey(state.workbookTitle)}_${sanitizeKey(cfg.config_name)}.json`;
+
+      try {
+        const exportApi = getAppApi();
+        if (exportApi?.save_config_file) {
+          const saved = await exportApi.save_config_file(fileName, json);
+          setStatus(saved ? "Config exported" : "Export cancelled", saved ? "saved" : "");
+          return;
+        }
+
+        if (window.showSaveFilePicker) {
+          const handle = await window.showSaveFilePicker({
+            suggestedName: fileName,
+            types: [{
+              description: "JSON config",
+              accept: { "application/json": [".json"] },
+            }],
+          });
+          const writable = await handle.createWritable();
+          await writable.write(json);
+          await writable.close();
+          setStatus("Config exported", "saved");
+          return;
+        }
+
+        const blob = new Blob([json], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        setStatus("Config exported", "saved");
+      } catch (err) {
+        if (err.name === "AbortError") {
+          setStatus("Export cancelled");
+          return;
+        }
+        setStatus("Export failed: " + err.message);
+      }
+    }
+
+    function importConfigObject(imported) {
+      if (!imported || typeof imported !== "object") {
+        throw new Error("Invalid config file.");
+      }
+
+      const requested = String(imported.config_name || "").trim() || state.activeConfigName || CONFIG_BASE_NAME;
+      const bundle = ensureConfigBundle();
+      saveCurrentConfigToBundle(bundle);
+      const existing = Object.keys(bundle.configs);
+      let name = requested;
+      if (existing.includes(requested) && requested !== state.activeConfigName) {
+        name = nextDerivedConfigName(requested, existing);
+      }
+
+      const normalized = normalizeConfig({ ...imported, config_name: name });
+      const cfg = {
+        ...normalized,
+        workbook: state.workbookTitle,
+        config_name: name,
+        auto_advance_row: !!normalized.auto_advance_row,
+        sidebar_width: normalized.sidebar_width || DEFAULT_SIDEBAR_WIDTH,
+        grading_panel_width: normalized.grading_panel_width || DEFAULT_GRADING_PANEL_WIDTH,
+        show_column_selector: normalized.show_column_selector !== undefined
+          ? !!normalized.show_column_selector
+          : true,
+        show_header: normalized.show_header !== undefined
+          ? !!normalized.show_header
+          : true,
+      };
+
+      bundle.configs[name] = cfg;
+      bundle.active_config = name;
+      state.activeConfigName = name;
+      saveConfigBundle(bundle);
+      applyConfig(cfg);
+      setStatus(`Imported config "${name}"`, "saved");
+    }
+
+    function setConfigControlsEnabled(enabled) {
+      $("config-select").disabled = !enabled;
+      $("btn-rename-config").disabled = !enabled;
+      $("btn-new-config").disabled = !enabled;
+      $("btn-import-config").disabled = !enabled;
+      $("btn-export-config").disabled = !enabled;
+    }
+
+    function updateCloseFileButton() {
+      const btn = $("btn-close-file");
+      if (!btn) return;
+      const canClose = !!state.activeWorkbookKey && !!state.workbook;
+      btn.classList.toggle("hidden", !canClose);
+      btn.disabled = !canClose;
+    }
+
+    function resetToNoWorkbook() {
+      state.workbook = null;
+      state.fileName = "";
+      state.filePath = null;
+      state.fileHandle = null;
+      state.workbookTitle = "";
+      state.sheetName = "";
+      state.headers = [];
+      state.originalHeaders = [];
+      state.hiddenColumns = new Set();
+      state.gradedColumns = new Set();
+      state.activeWorkbookKey = null;
+      state.currentRow = 2;
+      state.configBundle = null;
+      state.activeConfigName = CONFIG_BASE_NAME;
+      state.autoAdvanceRow = false;
+      $("auto-advance-row").checked = false;
+      state.dirty = false;
+      state.showHiddenColumns = false;
+      $("show-hidden-columns").checked = false;
+
+      $("sheet-field").classList.add("hidden");
+      $("file-field").classList.add("hidden");
+      setConfigControlsEnabled(false);
+      refreshFileSelect();
+      refreshConfigSelect();
+      setStatus("No file loaded");
+      renderAll();
+    }
+
+    async function closeWorkbook(workbookKey) {
+      if (!workbookKey || !openWorkbooks.has(workbookKey)) return;
+
+      if (workbookKey === state.activeWorkbookKey) {
+        await flushActiveWorkbook();
+        const session = openWorkbooks.get(workbookKey);
+        const filePath = session?.filePath;
+        openWorkbooks.delete(workbookKey);
+        if (filePath) await removePathFromNativeAppState(filePath);
+
+        state.activeWorkbookKey = null;
+        state.workbook = null;
+
+        const remaining = [...openWorkbooks.keys()];
+        if (remaining.length) {
+          await switchToWorkbook(remaining[0]);
+        } else {
+          resetToNoWorkbook();
+          await saveNativeAppState();
+        }
+        refreshFileSelect();
+        updateCloseFileButton();
+        return;
+      }
+
+      const session = openWorkbooks.get(workbookKey);
+      openWorkbooks.delete(workbookKey);
+      if (session?.filePath) await removePathFromNativeAppState(session.filePath);
+      refreshFileSelect();
+      updateCloseFileButton();
+      await saveNativeAppState();
+    }
+
+    async function closeActiveWorkbook() {
+      if (!state.activeWorkbookKey) return;
+      await closeWorkbook(state.activeWorkbookKey);
+    }
+
+    function scheduleAutoSave() {
+      clearTimeout(state.saveDebounce);
+      state.saveDebounce = setTimeout(persistActiveConfig, 400);
+    }
+
+    function setConfigRenameOpen(open) {
+      const overlay = $("config-rename-modal");
+      if (!overlay) return;
+      overlay.classList.toggle("hidden", !open);
+      if (open) {
+        const input = $("config-rename-input");
+        input.value = state.activeConfigName || CONFIG_BASE_NAME;
+        input.focus();
+        input.select();
+      }
+    }
+
+    function confirmConfigRename() {
+      const input = $("config-rename-input");
+      if (!saveConfig({ requireNonEmptyName: true, nameFromInput: input.value })) {
+        input.focus();
+        input.select();
+        return;
+      }
+      setConfigRenameOpen(false);
+      setStatus(`Renamed config to "${state.activeConfigName}"`, "saved");
+    }
+
+    function initConfigRename() {
+      const btn = $("btn-rename-config");
+      const overlay = $("config-rename-modal");
+      const input = $("config-rename-input");
+      const cancelBtn = $("config-rename-modal-cancel");
+      const confirmBtn = $("config-rename-modal-confirm");
+      if (!btn || !overlay || !input || !cancelBtn || !confirmBtn) return;
+
+      btn.addEventListener("click", () => {
+        if (btn.disabled) return;
+        setConfigRenameOpen(true);
+      });
+
+      cancelBtn.addEventListener("click", () => setConfigRenameOpen(false));
+      confirmBtn.addEventListener("click", confirmConfigRename);
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          confirmConfigRename();
+        }
+      });
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) setConfigRenameOpen(false);
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !overlay.classList.contains("hidden")) {
+          setConfigRenameOpen(false);
+        }
+      });
+    }
+
+    async function loadInitialConfigForWorkbook() {
+      const bundle = ensureConfigBundle();
+      if (bundle && Object.keys(bundle.configs).length) {
+        const names = Object.keys(bundle.configs);
+        const preferred =
+          state.activeConfigName && bundle.configs[state.activeConfigName]
+            ? state.activeConfigName
+            : null;
+        const active =
+          preferred
+          || (bundle.active_config && bundle.configs[bundle.active_config]
+            ? bundle.active_config
+            : names.sort(configNameSort)[0]);
+        if (active && bundle.configs[active]) {
+          state.activeConfigName = active;
+          bundle.active_config = active;
+          applyConfig(bundle.configs[active]);
+          return;
+        }
+      }
+
+      state.activeConfigName = CONFIG_BASE_NAME;
+      applyConfig(emptyConfig(CONFIG_BASE_NAME));
+      saveConfig();
+    }
+
+    async function switchToWorkbook(workbookKey) {
+      if (!workbookKey || workbookKey === state.activeWorkbookKey) return true;
+      if (!openWorkbooks.has(workbookKey)) return false;
+
+      await flushActiveWorkbook();
+
+      state.activeWorkbookKey = workbookKey;
+      restoreSession(openWorkbooks.get(workbookKey));
+
+      if (!state.configBundle) {
+        state.configBundle = await loadConfigBundleFromStore(workbookKey);
+      }
+
+      $("auto-advance-row").checked = state.autoAdvanceRow;
+      $("show-hidden-columns").checked = state.showHiddenColumns;
+      applySidebarWidth(state.sidebarWidth);
+      layoutGradingPanel();
+
+      await loadInitialConfigForWorkbook();
+      $("sheet-field").classList.remove("hidden");
+      setConfigControlsEnabled(true);
+      refreshFileSelect();
+      refreshConfigSelect();
+      setDirty(state.dirty);
+      setFileStatus(state.fileName, state.dirty ? "dirty" : "saved");
+      renderAll();
+      await saveNativeAppState();
+      return true;
+    }
+
+    function setStatus(text, cls) {
+      const el = $("status");
+      el.textContent = text;
+      el.title = "";
+      el.className = "status" + (cls ? " " + cls : "");
+    }
+
+    function setFileStatus(fileName, cls, suffix = "") {
+      const text = suffix ? `${fileName}${suffix}` : fileName;
+      const el = $("status");
+      el.textContent = text;
+      el.title = "";
+      el.className = "status" + (cls ? " " + cls : "");
+    }
+
+    function setDirty(dirty) {
+      state.dirty = dirty;
+      if (dirty) {
+        setStatus("Unsaved workbook changes", "dirty");
+      } else if (state.workbook) {
+        setFileStatus(state.fileName, "saved", " — saved");
+      }
+    }
+
+    async function ensureWritePermission(handle) {
+      if (!handle.queryPermission) return;
+      let perm = await handle.queryPermission({ mode: "readwrite" });
+      if (perm !== "granted") {
+        perm = await handle.requestPermission({ mode: "readwrite" });
+      }
+      if (perm !== "granted") {
+        throw new Error("Write permission denied for this file.");
+      }
+    }
+
+    async function ensureFileHandle() {
+      if (state.fileHandle) return state.fileHandle;
+      if (!window.showSaveFilePicker) {
+        throw new Error(
+          "In-place save is not available. Re-open the file using Open."
+        );
+      }
+      state.fileHandle = await window.showSaveFilePicker({
+        suggestedName: state.fileName || "graded.xlsx",
+        types: [{
+          description: "Excel workbook",
+          accept: { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] },
+        }],
+      });
+      return state.fileHandle;
+    }
+
+    async function saveWorkbook() {
+      if (!state.workbook) return false;
+      const data = XLSX.write(state.workbook, { bookType: "xlsx", type: "array" });
+
+      const saveApi = getAppApi();
+      if (state.filePath && saveApi?.write_file_bytes) {
+        await saveApi.write_file_bytes(state.filePath, arrayBufferToBase64(data));
+        setDirty(false);
+        if (state.activeWorkbookKey) {
+          openWorkbooks.set(state.activeWorkbookKey, captureCurrentSession());
+        }
+        return true;
+      }
+
+      if (window.location.protocol !== "file:") {
+        const handle = await ensureFileHandle();
+        await ensureWritePermission(handle);
+        const writable = await handle.createWritable();
+        await writable.write(new Uint8Array(data));
+        await writable.close();
+        setDirty(false);
+        if (state.activeWorkbookKey) {
+          openWorkbooks.set(state.activeWorkbookKey, captureCurrentSession());
+        }
+        return true;
+      }
+
+      XLSX.writeFile(state.workbook, state.fileName || "graded.xlsx");
+      setDirty(false);
+      if (state.activeWorkbookKey) {
+        openWorkbooks.set(state.activeWorkbookKey, captureCurrentSession());
+      }
+      return true;
+    }
+
+    async function reloadWorkbookFromFile() {
+      if (!state.workbook) return;
+
+      const preserved = {
+        sheetName: state.sheetName,
+        hiddenColumns: new Set(state.hiddenColumns),
+        gradedColumns: new Set(state.gradedColumns),
+        currentRow: state.currentRow,
+        autoAdvanceRow: state.autoAdvanceRow,
+        sidebarWidth: state.sidebarWidth,
+        gradingPanelWidth: state.gradingPanelWidth,
+        activeConfigName: state.activeConfigName,
+        showHiddenColumns: state.showHiddenColumns,
+        fileName: state.fileName,
+        filePath: state.filePath,
+        fileHandle: state.fileHandle,
+      };
+
+      let buffer;
+      const readApi = getAppApi();
+      if (state.filePath && readApi?.read_file_bytes) {
+        const b64 = await readApi.read_file_bytes(state.filePath);
+        buffer = base64ToArrayBuffer(b64);
+      } else if (state.fileHandle) {
+        const file = await state.fileHandle.getFile();
+        buffer = await file.arrayBuffer();
+      } else {
+        buffer = XLSX.write(state.workbook, { bookType: "xlsx", type: "array" });
+      }
+
+      state.workbook = XLSX.read(buffer, { type: "array" });
+      state.fileName = preserved.fileName;
+      state.filePath = preserved.filePath;
+      state.fileHandle = preserved.fileHandle;
+      state.workbookTitle = getWorkbookTitle();
+      if (!state.workbook.SheetNames.includes(preserved.sheetName)) {
+        state.sheetName = state.workbook.SheetNames[0] || "";
+      } else {
+        state.sheetName = preserved.sheetName;
+      }
+      state.headers = readHeaders(getSheet());
+      state.hiddenColumns = preserved.hiddenColumns;
+      state.gradedColumns = preserved.gradedColumns;
+      state.currentRow = clampRow(preserved.currentRow);
+      state.autoAdvanceRow = preserved.autoAdvanceRow;
+      $("auto-advance-row").checked = state.autoAdvanceRow;
+      state.gradingPanelWidth = preserved.gradingPanelWidth;
+      applySidebarWidth(preserved.sidebarWidth);
+      layoutGradingPanel();
+      state.activeConfigName = preserved.activeConfigName;
+      state.showHiddenColumns = preserved.showHiddenColumns;
+      $("show-hidden-columns").checked = state.showHiddenColumns;
+      refreshConfigSelect();
+      setDirty(false);
+      setFileStatus(state.fileName, "saved", " — saved");
+      renderAll();
+      if (state.activeWorkbookKey) {
+        openWorkbooks.set(state.activeWorkbookKey, captureCurrentSession());
+      }
+    }
+
+    async function saveAndReloadWorkbook() {
+      await saveWorkbook();
+      await reloadWorkbookFromFile();
+    }
+
+    async function addWorkbookFromBuffer(buffer, fileName, filePath, fileHandle) {
+      const workbookKey = getWorkbookKey(filePath, fileName);
+
+      if (openWorkbooks.has(workbookKey)) {
+        await switchToWorkbook(workbookKey);
+        return;
+      }
+
+      await flushActiveWorkbook();
+
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const sheetName = workbook.SheetNames[0] || "";
+      state.workbook = workbook;
+      state.fileName = fileName;
+      state.filePath = filePath || null;
+      state.fileHandle = fileHandle || null;
+      state.sheetName = sheetName;
+      state.workbookTitle = getWorkbookTitle();
+      state.headers = readHeaders(getSheet());
+      snapshotOriginalHeaders();
+      const gradeColumnsCreated = ensureGradeColumnsForSheet();
+      const sumColumnCreated = ensureSumColumnForSheet();
+      const structureChanged = gradeColumnsCreated || sumColumnCreated;
+      state.currentRow = clampRow(2);
+      state.hiddenColumns = new Set();
+      state.gradedColumns = new Set();
+      state.showHiddenColumns = false;
+      $("show-hidden-columns").checked = false;
+      state.activeConfigName = CONFIG_BASE_NAME;
+      state.autoAdvanceRow = false;
+      state.dirty = false;
+      state.configBundle = await loadConfigBundleFromStore(workbookKey);
+      state.activeWorkbookKey = workbookKey;
+
+      await loadInitialConfigForWorkbook();
+      openWorkbooks.set(workbookKey, captureCurrentSession());
+      $("sheet-field").classList.remove("hidden");
+      setConfigControlsEnabled(true);
+      refreshFileSelect();
+      if (structureChanged && state.filePath && getAppApi()) {
+        await saveWorkbook();
+        openWorkbooks.set(workbookKey, captureCurrentSession());
+      } else {
+        setDirty(structureChanged);
+        setFileStatus(fileName, structureChanged ? "dirty" : "saved");
+      }
+      renderAll();
+      await saveNativeAppState();
+    }
+
+    function getWorkbookSheetNames() {
+      if (!state.workbook) return [];
+      const names = state.workbook.SheetNames;
+      return Array.isArray(names) ? [...names] : [];
+    }
+
+    function renderSheetSelect() {
+      const sel = $("sheet-select");
+      sel.innerHTML = "";
+      if (!state.workbook) return;
+
+      const sheetNames = getWorkbookSheetNames();
+      for (const name of sheetNames) {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      }
+
+      if (sheetNames.length) {
+        if (!sheetNames.includes(state.sheetName)) {
+          state.sheetName = sheetNames[0];
+        }
+        sel.value = state.sheetName;
+      }
+      syncSelectTitle(sel);
+    }
+
+    function hideColumn(col1) {
+      const header = state.headers.find((h) => h.index1 === col1);
+      const name = header ? formatColumnDisplay(header) : col1ToLetter(col1);
+
+      state.hiddenColumns.add(col1);
+      state.gradedColumns.delete(col1);
+      scheduleAutoSave();
+      renderAll();
+      setStatus(`Hidden column ${name}`, "saved");
+    }
+
+    function unhideColumn(col1) {
+      const header = state.headers.find((h) => h.index1 === col1);
+      const name = header ? formatColumnDisplay(header) : col1ToLetter(col1);
+      state.hiddenColumns.delete(col1);
+      scheduleAutoSave();
+      renderAll();
+      setStatus(`Unhidden column ${name}`, "saved");
+    }
+
+    function renderColumnToggles() {
+      const list = $("column-list");
+      const empty = $("columns-empty");
+      list.innerHTML = "";
+      const selectorHeaders = getColumnSelectorHeaders();
+      if (!selectorHeaders.length) {
+        empty.classList.remove("hidden");
+        empty.textContent = state.workbook
+          ? (state.headers.length ? "All columns hidden." : "No column headers found.")
+          : NO_WORKBOOK_EMPTY_MSG;
+        return;
+      }
+      empty.classList.add("hidden");
+
+      for (const h of selectorHeaders) {
+        const isHidden = state.hiddenColumns.has(h.index1);
+        const li = document.createElement("li");
+        li.className = isHidden ? "column-item column-item-hidden" : "column-item";
+
+        const lbl = document.createElement("label");
+        lbl.textContent = formatColumnDisplay(h);
+        lbl.title = formatColumnDisplay(h);
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        if (isHidden) {
+          deleteBtn.className = "col-delete col-unhide";
+          deleteBtn.title = "Unhide column";
+          deleteBtn.setAttribute("aria-label", "Unhide column");
+          deleteBtn.appendChild(createUnhideColumnIcon());
+          deleteBtn.addEventListener("click", () => {
+            unhideColumn(h.index1);
+          });
+        } else {
+          deleteBtn.className = "col-delete";
+          deleteBtn.title = "Hide column";
+          deleteBtn.setAttribute("aria-label", "Hide column");
+          deleteBtn.appendChild(createHideColumnIcon());
+          deleteBtn.addEventListener("click", () => {
+            hideColumn(h.index1);
+          });
+        }
+
+        li.appendChild(lbl);
+        if (!isHidden) {
+          const gradeCb = document.createElement("input");
+          gradeCb.type = "checkbox";
+          gradeCb.title = "Grade";
+          gradeCb.checked = state.gradedColumns.has(h.index1);
+          gradeCb.addEventListener("change", () => {
+            if (gradeCb.checked) {
+              state.gradedColumns.add(h.index1);
+            } else {
+              state.gradedColumns.delete(h.index1);
+            }
+            scheduleAutoSave();
+            renderAll();
+          });
+
+          const toggleGroup = document.createElement("div");
+          toggleGroup.className = "toggle-group";
+
+          const gradePair = document.createElement("div");
+          gradePair.className = "toggle-pair";
+          gradePair.appendChild(document.createTextNode("Grade"));
+          gradePair.appendChild(gradeCb);
+
+          toggleGroup.appendChild(gradePair);
+          li.appendChild(toggleGroup);
+        }
+        li.appendChild(deleteBtn);
+        list.appendChild(li);
+      }
+    }
+
+    function createGradeReadoutCard(sheet, row1, header) {
+      const col1 = header.index1;
+      const cellValue = getCellValue(sheet, row1, col1);
+      const hasValue = String(cellValue ?? "").trim() !== "";
+      const displayName = formatColumnDisplay(header);
+
+      const card = document.createElement("div");
+      card.className = "field-card field-card-grade";
+
+      const headerRow = document.createElement("div");
+      headerRow.className = "field-card-header";
+
+      const label = document.createElement("div");
+      label.className = "label";
+      label.textContent = displayName;
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "field-card-delete";
+      deleteBtn.title = "Clear grade";
+      deleteBtn.setAttribute("aria-label", `Clear grade for ${displayName}`);
+      deleteBtn.disabled = !hasValue;
+      deleteBtn.appendChild(createTrashIcon());
+      deleteBtn.addEventListener("click", () => {
+        void handleClearGrade(col1);
+      });
+
+      headerRow.appendChild(label);
+      headerRow.appendChild(deleteBtn);
+
+      const value = document.createElement("div");
+      value.className = "value";
+      value.textContent = cellValue;
+
+      card.appendChild(headerRow);
+      card.appendChild(value);
+      return card;
+    }
+
+    async function handleClearGrade(col1) {
+      const sheet = getSheet();
+      if (!sheet) return;
+      const row1 = state.currentRow;
+      const cellValue = getCellValue(sheet, row1, col1);
+      if (String(cellValue ?? "").trim() === "") return;
+
+      clearCellValue(sheet, row1, col1);
+      updateRowSumCell(sheet, row1);
+      setDirty(true);
+      try {
+        await saveWorkbook();
+        renderRowPanel();
+        setStatus("Grade cleared", "saved");
+      } catch (err) {
+        console.error(err);
+        setStatus("Clear failed: " + err.message);
+      }
+    }
+
+    function renderRowPanel() {
+      const sheet = getSheet();
+      const cards = $("field-cards");
+      const empty = $("fields-empty");
+      const nav = $("row-nav");
+      cards.innerHTML = "";
+
+      const readoutCols = getRowReadoutColumns();
+      const gradeCols = getPopulatedGradeColumnHeaders(sheet, state.currentRow);
+      const hasSum = !!findSumColumnHeader();
+      if (!sheet || (!readoutCols.length && !gradeCols.length && !hasSum)) {
+        nav.classList.add("hidden");
+        empty.classList.remove("hidden");
+        empty.textContent = !state.workbook
+          ? NO_WORKBOOK_EMPTY_MSG
+          : (state.headers.length ? "All columns hidden." : "No column headers found.");
+        return;
+      }
+
+      nav.classList.remove("hidden");
+      empty.classList.add("hidden");
+
+      state.currentRow = clampRow(state.currentRow);
+      $("current-row-input").value = state.currentRow;
+
+      if (hasSum) {
+        const { sum } = computeRowGradeSum(sheet, state.currentRow);
+        const sumCard = document.createElement("div");
+        sumCard.className = "field-card field-card-sum";
+        const sumLabel = document.createElement("div");
+        sumLabel.className = "label";
+        sumLabel.textContent = SUM_COL_NAME;
+        const sumValue = document.createElement("div");
+        sumValue.className = "value";
+        sumValue.textContent = sum;
+        sumCard.appendChild(sumLabel);
+        sumCard.appendChild(sumValue);
+        cards.appendChild(sumCard);
+      }
+
+      for (const header of gradeCols) {
+        cards.appendChild(createGradeReadoutCard(sheet, state.currentRow, header));
+      }
+
+      for (const col1 of readoutCols) {
+        const header = state.headers.find((h) => h.index1 === col1);
+        const card = document.createElement("div");
+        card.className = "field-card";
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = header ? formatColumnDisplay(header) : "";
+        const value = document.createElement("div");
+        value.className = "value";
+        value.textContent = getCellValue(sheet, state.currentRow, col1);
+        card.appendChild(label);
+        card.appendChild(value);
+        cards.appendChild(card);
+      }
+    }
+
+    function parseGradeValue(rawValue) {
+      if (rawValue === "") return null;
+      const value = Number(rawValue);
+      if (Number.isNaN(value)) {
+        throw new Error("Grade must be a number.");
+      }
+      return value;
+    }
+
+    function getSortedGradeHeaders() {
+      const headers = getGradeColumnHeaders();
+      const sumHeader = findSumColumnHeader();
+      if (sumHeader) headers.push(sumHeader);
+      return headers;
+    }
+
+    function formatTsvCell(value) {
+      const str = value == null ? "" : String(value);
+      if (/[\t\r\n"]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    }
+
+    function rowHasGradeCopyData(sheet, row1, gradeHeaders) {
+      return gradeHeaders.some((header) => {
+        const value = getCellValue(sheet, row1, header.index1);
+        return String(value ?? "").trim() !== "";
+      });
+    }
+
+    function getGradeCopyRows(sheet, gradeHeaders) {
+      const { min, max } = getDataRowRange();
+      let first = null;
+      let last = null;
+      for (let row1 = min; row1 <= max; row1++) {
+        if (rowHasGradeCopyData(sheet, row1, gradeHeaders)) {
+          if (first === null) first = row1;
+          last = row1;
+        }
+      }
+      if (first === null) return [];
+      const rows = [];
+      for (let row1 = first; row1 <= last; row1++) rows.push(row1);
+      return rows;
+    }
+
+    function columnHasCopyData(sheet, header, copyRows) {
+      return copyRows.some((row1) => {
+        const value = getCellValue(sheet, row1, header.index1);
+        return String(value ?? "").trim() !== "";
+      });
+    }
+
+    function buildGradeColumnsTsv() {
+      const sheet = getSheet();
+      if (!sheet) throw new Error("No sheet loaded.");
+
+      const allGradeHeaders = getSortedGradeHeaders();
+      if (!allGradeHeaders.length) throw new Error("No grade columns found.");
+
+      const copyRows = getGradeCopyRows(sheet, allGradeHeaders);
+      const gradeHeaders = allGradeHeaders.filter((header) =>
+        columnHasCopyData(sheet, header, copyRows),
+      );
+      if (!gradeHeaders.length) throw new Error("No grade columns found.");
+
+      const lines = [];
+      lines.push(gradeHeaders.map((header) => formatTsvCell(header.label)).join("\t"));
+
+      for (const row1 of copyRows) {
+        const rowValues = gradeHeaders.map((header) =>
+          formatTsvCell(getCellValue(sheet, row1, header.index1)),
+        );
+        lines.push(rowValues.join("\t"));
+      }
+
+      return {
+        tsv: lines.join("\r\n"),
+        rowCount: copyRows.length,
+        columnCount: gradeHeaders.length,
+      };
+    }
+
+    async function copyTextToClipboard(text) {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (!copied) throw new Error("Clipboard copy is not supported in this browser.");
+    }
+
+    function updateCopyGradesButton() {
+      const btn = $("btn-copy-grades");
+      const hasWorkbook = !!state.workbook;
+      btn.classList.toggle("hidden", !hasWorkbook);
+      btn.disabled = !hasWorkbook || !getSortedGradeHeaders().length;
+    }
+
+    async function handleCopyGrades() {
+      const statusEl = $("submit-all-status");
+      resetSubmitStatus(statusEl);
+
+      try {
+        const { tsv, rowCount, columnCount } = buildGradeColumnsTsv();
+        await copyTextToClipboard(tsv);
+        flashCopyGradesIcon();
+        let msg = `Copied ${columnCount} grade column${columnCount === 1 ? "" : "s"}`;
+        msg += rowCount ? ` (${rowCount} row${rowCount === 1 ? "" : "s"}).` : " (headers only).";
+        statusEl.textContent = msg;
+        statusEl.classList.add("form-success");
+        statusEl.classList.remove("hidden");
+      } catch (err) {
+        statusEl.textContent = err.message;
+        statusEl.classList.remove("form-success");
+        statusEl.classList.remove("hidden");
+      }
+    }
+
+    function patchGrade(col1, value) {
+      const sheet = getSheet();
+      if (!sheet) throw new Error("No sheet loaded.");
+
+      const targetCol1 = getGradeTargetCol1(col1);
+      setCellValue(sheet, state.currentRow, targetCol1, value);
+      return { targetRow1: state.currentRow, targetCol1 };
+    }
+
+    function renderGradeForms() {
+      const container = $("grade-forms");
+      const empty = $("grades-empty");
+      const submitAllBtn = $("btn-submit-all");
+      container.innerHTML = "";
+
+      const graded = [...state.gradedColumns].sort((a, b) => a - b);
+      if (!graded.length) {
+        empty.classList.remove("hidden");
+        empty.textContent = !state.workbook
+          ? NO_WORKBOOK_EMPTY_MSG
+          : "Mark columns as \"Grade\" to show forms.";
+        submitAllBtn.classList.add("hidden");
+        return;
+      }
+      empty.classList.add("hidden");
+      submitAllBtn.classList.remove("hidden");
+
+      for (const col1 of graded) {
+        const header = state.headers.find((h) => h.index1 === col1);
+        const form = document.createElement("div");
+        form.className = "grade-form";
+        form.dataset.col = col1;
+
+        const title = document.createElement("h3");
+        title.textContent = header ? formatColumnDisplay(header) : col1ToLetter(col1);
+        title.title = title.textContent;
+
+        const valueRow = document.createElement("div");
+        valueRow.className = "form-row";
+        const valueLabel = document.createElement("label");
+        valueLabel.textContent = "Grade";
+        const valueInput = document.createElement("input");
+        valueInput.type = "number";
+        valueInput.step = "any";
+        valueInput.placeholder = "0";
+        valueRow.appendChild(valueLabel);
+        valueRow.appendChild(valueInput);
+
+        form.appendChild(title);
+        form.appendChild(valueRow);
+        container.appendChild(form);
+      }
+    }
+
+    async function handleSubmitAll() {
+      const statusEl = $("submit-all-status");
+      const submitAllBtn = $("btn-submit-all");
+      resetSubmitStatus(statusEl);
+
+      const forms = [...$("grade-forms").querySelectorAll(".grade-form")];
+      const entries = [];
+
+      for (const form of forms) {
+        const col1 = parseInt(form.dataset.col, 10);
+        const valueInput = form.querySelector('input[type="number"]');
+        const rawValue = valueInput.value.trim();
+        if (rawValue === "") continue;
+
+        try {
+          const value = parseGradeValue(rawValue);
+          entries.push({ col1, value, valueInput, form });
+        } catch (e) {
+          const header = state.headers.find((h) => h.index1 === col1);
+          const name = header ? formatColumnDisplay(header) : col1ToLetter(col1);
+          statusEl.textContent = `${name}: ${e.message}`;
+          statusEl.classList.remove("form-success");
+          statusEl.classList.remove("hidden");
+          return;
+        }
+      }
+
+      if (!entries.length) {
+        statusEl.textContent = "No grades entered.";
+        statusEl.classList.remove("form-success");
+        statusEl.classList.remove("hidden");
+        return;
+      }
+
+      submitAllBtn.disabled = true;
+      try {
+        const sheet = getSheet();
+        const gradedRow = state.currentRow;
+        for (const entry of entries) {
+          patchGrade(entry.col1, entry.value);
+        }
+        updateRowSumCell(sheet, gradedRow);
+        if (state.autoAdvanceRow) {
+          state.currentRow = clampRow(state.currentRow + 1);
+        }
+        setDirty(true);
+        await saveWorkbook();
+        for (const entry of entries) {
+          entry.valueInput.value = "";
+        }
+        renderRowPanel();
+        let msg = `Saved ${entries.length} grade${entries.length === 1 ? "" : "s"}.`;
+        if (state.autoAdvanceRow) {
+          msg += ` Row ${state.currentRow}.`;
+        }
+        statusEl.textContent = msg;
+        statusEl.classList.add("form-success");
+        statusEl.classList.remove("hidden");
+      } catch (e) {
+        statusEl.textContent = "Save failed: " + e.message;
+        statusEl.classList.remove("form-success");
+        statusEl.classList.remove("hidden");
+      } finally {
+        submitAllBtn.disabled = false;
+      }
+    }
+
+    function renderAll() {
+      renderSheetSelect();
+      renderColumnToggles();
+      renderRowPanel();
+      renderGradeForms();
+      updateCopyGradesButton();
+      updateCloseFileButton();
+    }
+
+    async function openWithFilePicker() {
+      const openApi = getAppApi();
+      if (openApi?.open_xlsx_files) {
+        try {
+          const paths = await openApi.open_xlsx_files();
+          if (!paths.length) return;
+          for (const path of paths) {
+            const b64 = await openApi.read_file_bytes(path);
+            const buffer = base64ToArrayBuffer(b64);
+            await openOriginalAsProxy(path, buffer);
+          }
+        } catch (err) {
+          console.error(err);
+          setStatus("Open failed: " + err.message);
+        }
+        return;
+      }
+
+      if (!window.showOpenFilePicker) {
+        $("file-input").click();
+        return;
+      }
+      try {
+        const handles = await window.showOpenFilePicker({
+          types: [{
+            description: "Excel workbook",
+            accept: { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] },
+          }],
+          multiple: true,
+        });
+        for (const handle of handles) {
+          await ensureWritePermission(handle);
+          const file = await handle.getFile();
+          const buffer = await file.arrayBuffer();
+          await addWorkbookFromBuffer(buffer, file.name, null, handle);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error(err);
+          setStatus("Open failed: " + err.message);
+        }
+      }
+    }
+
+    $("btn-open").addEventListener("click", openWithFilePicker);
+
+    $("btn-close-file").addEventListener("click", () => {
+      closeActiveWorkbook();
+    });
+
+    $("file-input").addEventListener("change", async (e) => {
+      const files = [...(e.target.files || [])];
+      e.target.value = "";
+      for (const file of files) {
+        const buffer = await file.arrayBuffer();
+        await addWorkbookFromBuffer(buffer, file.name, null, null);
+      }
+    });
+
+    $("file-select").addEventListener("change", async (e) => {
+      const ok = await switchToWorkbook(e.target.value);
+      if (!ok) refreshFileSelect();
+    });
+
+    $("sheet-select").addEventListener("change", (e) => {
+      switchSheet(e.target.value);
+    });
+
+    $("btn-prev").addEventListener("click", () => {
+      state.currentRow = clampRow(state.currentRow - 1);
+      scheduleAutoSave();
+      renderRowPanel();
+    });
+
+    $("btn-next").addEventListener("click", () => {
+      state.currentRow = clampRow(state.currentRow + 1);
+      scheduleAutoSave();
+      renderRowPanel();
+    });
+
+    $("current-row-input").addEventListener("change", (e) => {
+      state.currentRow = clampRow(parseInt(e.target.value, 10) || 2);
+      scheduleAutoSave();
+      renderRowPanel();
+    });
+
+    $("btn-new-config").addEventListener("click", createNewConfig);
+
+    $("btn-import-config").addEventListener("click", () => {
+      $("config-import-input").click();
+    });
+
+    $("btn-export-config").addEventListener("click", exportCurrentConfig);
+
+    $("config-import-input").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const imported = JSON.parse(ev.target.result);
+          importConfigObject(imported);
+        } catch (err) {
+          setStatus("Import failed: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    $("config-select").addEventListener("change", (e) => {
+      switchToConfig(e.target.value);
+    });
+
+    $("auto-advance-row").addEventListener("change", (e) => {
+      state.autoAdvanceRow = e.target.checked;
+      scheduleAutoSave();
+    });
+
+    $("show-hidden-columns").addEventListener("change", (e) => {
+      state.showHiddenColumns = e.target.checked;
+      renderColumnToggles();
+      if (state.activeWorkbookKey) {
+        openWorkbooks.set(state.activeWorkbookKey, captureCurrentSession());
+      }
+    });
+
+    $("dark-theme").addEventListener("click", () => {
+      applyDarkTheme(!state.darkTheme);
+    });
+
+    $("btn-submit-all").addEventListener("click", handleSubmitAll);
+    $("btn-copy-grades").addEventListener("click", handleCopyGrades);
+
+    function initPanelResize(resizer, getStartWidth, applyWidth) {
+      resizer.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        const startX = e.clientX;
+        const startWidth = getStartWidth();
+        resizer.classList.add("panel-resizer-active");
+        document.body.classList.add("col-resize-active");
+
+        function onMove(ev) {
+          applyWidth(startWidth + (ev.clientX - startX));
+        }
+
+        function onUp() {
+          resizer.classList.remove("panel-resizer-active");
+          document.body.classList.remove("col-resize-active");
+          document.removeEventListener("mousemove", onMove);
+          document.removeEventListener("mouseup", onUp);
+          scheduleAutoSave();
+        }
+
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+      });
+    }
+
+    function initSidebarResize() {
+      initPanelResize(
+        $("sidebar-resizer"),
+        () => state.sidebarWidth,
+        applySidebarWidth,
+      );
+    }
+
+    function initColumnsPanelResize() {
+      initPanelResize(
+        $("columns-panel-resizer"),
+        getGradingPanelLayoutWidth,
+        applyGradingPanelWidth,
+      );
+    }
+
+    bootTheme();
+    initWebLifecycle();
+    initColumnSelectorPreference();
+    initColumnSelectorToggle();
+    initHeaderPreference();
+    initHeaderToggle();
+    initSettingsMenu();
+    initAuthorCredits();
+    initConfigRename();
+    initConfigCreate();
+    applySidebarWidth(DEFAULT_SIDEBAR_WIDTH);
+    layoutGradingPanel();
+    initSidebarResize();
+    initColumnsPanelResize();
+    window.addEventListener("resize", () => {
+      applySidebarWidth(state.sidebarWidth);
+    });
+    initPageScrollLock();
+    updateCloseFileButton();
+
+    onNativeReady(() => {
+      void restoreOpenFilesFromAppState();
+    });
+
+    onAppReady(() => {
+      if (isLauncherTab()) {
+        void restoreOpenFilesFromAppState();
+      }
+    });
+
+    function initPageScrollLock() {
+      const scrollSelector = ".sidebar-scroll, .panel-columns-scroll, .panel-grading-scroll";
+
+      function scrollRegionForTarget(target) {
+        return target.closest(scrollSelector);
+      }
+
+      function canScrollRegion(region, deltaY) {
+        const maxScroll = region.scrollHeight - region.clientHeight;
+        if (maxScroll <= 0) return false;
+        if (deltaY > 0) return region.scrollTop < maxScroll - 1;
+        if (deltaY < 0) return region.scrollTop > 0;
+        return false;
+      }
+
+      document.addEventListener("wheel", (e) => {
+        const region = scrollRegionForTarget(e.target);
+        if (region && canScrollRegion(region, e.deltaY)) return;
+
+        const shell = e.target.closest(".panel-shell");
+        if (shell && !region) {
+          const innerScroll = shell.querySelector(".panel-columns-scroll, .panel-grading-scroll");
+          if (innerScroll && canScrollRegion(innerScroll, e.deltaY)) {
+            innerScroll.scrollTop += e.deltaY;
+            e.preventDefault();
+            return;
+          }
+        }
+
+        e.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener("touchmove", (e) => {
+        if (!scrollRegionForTarget(e.target)) e.preventDefault();
+      }, { passive: false });
+    }
+  </script>
+</body>
+</html>
