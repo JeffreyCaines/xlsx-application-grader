@@ -243,13 +243,13 @@
       <section id="what">
         <h2>1. What this program is</h2>
         <p>
-          XLSX Application Grader is a local Windows tool for scoring rows in an Excel
-          workbook. You open an <code>.xlsx</code> file, review one applicant (row) at a
-          time, enter numeric grades, and write those grades back into the workbook.
+          XLSX Application Grader scores rows in an Excel workbook. You open an
+          <code>.xlsx</code> file, review one applicant (row) at a time, enter numeric
+          grades, and store those grades in a proxy copy.
         </p>
         <p>
-          It is meant for people who review application spreadsheets. It is not a website
-          you log into. Everything runs on your computer.
+          You can run it as a local Windows program or as a website. There is no login.
+          On the website, grades stay in this browser only.
         </p>
         <table>
           <thead>
@@ -284,11 +284,11 @@
 
       <section id="start">
         <h2>2. How to start</h2>
-        <p>Use one of the two program files:</p>
+        <p>Use the Windows program or the hosted website.</p>
         <table>
           <thead>
             <tr>
-              <th>Program</th>
+              <th>How you start</th>
               <th>What it does</th>
             </tr>
           </thead>
@@ -303,17 +303,25 @@
                 Starts a local server and opens the grader in your default browser.
               </td>
             </tr>
+            <tr>
+              <td>Hosted website</td>
+              <td>
+                Open the site URL in a browser. No EXE. Grades and configs stay in this
+                browser’s storage.
+              </td>
+            </tr>
           </tbody>
         </table>
         <ol>
-          <li>Double-click the EXE you were given.</li>
+          <li>Open the EXE you were given, or open the website URL.</li>
           <li>Wait for the grader window or browser tab to appear.</li>
           <li>You should see <strong>Open .xlsx</strong> in the top bar.</li>
         </ol>
         <p>
-          If you close every browser tab while using the web version, the local server stops
+          If you close every browser tab while using the local web EXE, the local server stops
           after a short delay. Restart the EXE if you see
-          <strong>Server connection lost</strong>.
+          <strong>Server connection lost</strong>. The hosted website does not use that server
+          and does not show that banner.
         </p>
       </section>
 
@@ -442,10 +450,12 @@
       <section id="saved">
         <h2>6. Where grades are saved</h2>
         <p>
-          When you open a file through the app’s open dialog, grades are written to a
-          <strong>proxy copy</strong>, not to the original path you picked.
+          When you open a file through <strong>Open .xlsx</strong>, grades are written to a
+          <strong>proxy copy</strong>, not to the original file you picked. The original
+          workbook on disk is never overwritten.
         </p>
-        <p>On Windows the copy lives here:</p>
+        <h3>Windows EXE</h3>
+        <p>The proxy lives here:</p>
         <p>
           <code>%APPDATA%\xlsx_application_grader\Grades for - {workbook name}.xlsx</code>
         </p>
@@ -456,13 +466,26 @@
         <ul>
           <li>If that proxy already exists, the app reuses it instead of copying again.</li>
           <li>
-            Open the graded file from AppData (or use <strong>Copy grades</strong>) when you need
-            the results elsewhere.
+            Open the graded file from AppData, or use <strong>Copy grades</strong>, when you
+            need the results elsewhere.
+          </li>
+        </ul>
+        <h3>Hosted website</h3>
+        <p>
+          The proxy is stored in this browser (IndexedDB), still named
+          <code>Grades for - {workbook name}.xlsx</code>. It is not uploaded to the server.
+        </p>
+        <ul>
+          <li>If a proxy for that file name already exists in this browser, the site reuses it.</li>
+          <li>Use <strong>Copy grades</strong> to paste results into Excel.</li>
+          <li>
+            Clearing site data, switching browsers, or using another device removes the proxy
+            and configs. There is no cross-device sync.
           </li>
         </ul>
         <p class="note">
           <strong>Important:</strong> Do not assume the original workbook on your Desktop or
-          shared drive was updated. Check the <code>Grades for - …</code> file.
+          shared drive was updated. Grades live in the proxy (AppData or this browser).
         </p>
       </section>
 
@@ -476,6 +499,10 @@
         <p>
           Only rows that have grade data are included, along with the grade headers and
           <code>Sum of All Grades</code> when present.
+        </p>
+        <p>
+          On the hosted website this is the way to get grades into Excel. The site does not
+          write the graded workbook back to disk.
         </p>
       </section>
 
@@ -524,9 +551,10 @@
           </li>
         </ol>
         <p>
-          Config files are kept under
+          On the Windows EXEs, config files are kept under
           <code>%APPDATA%\xlsx_application_grader\</code> in
           <code>native_configs</code> or <code>web_configs</code>, depending on which EXE you use.
+          On the hosted website, configs stay in this browser with the proxy files.
         </p>
       </section>
 
@@ -586,8 +614,8 @@
             Submit.
           </li>
           <li>
-            <strong>Proxy file</strong>: graded copy under AppData; original path is not the save
-            target when opened via the app dialog.
+            <strong>Proxy file</strong>: graded copy. Windows EXE: AppData. Hosted website:
+            this browser. The original path is not the save target.
           </li>
           <li>
             <strong>Config</strong>: reusable grading layout for a workbook.
@@ -596,20 +624,21 @@
 
         <h3>Common mistakes</h3>
         <ul>
-          <li>Expected the original <code>.xlsx</code> to change; grades are in <code>Grades for - …</code>.</li>
+          <li>Expected the original <code>.xlsx</code> to change; grades are in the proxy.</li>
           <li>Entered text instead of numbers; Submit requires numeric grades.</li>
           <li>Clicked <strong>Submit all</strong> with every field empty.</li>
-          <li>Closed all web tabs and kept grading; restart the app after a disconnect banner.</li>
+          <li>Closed all local web EXE tabs and kept grading; restart the app after a disconnect banner.</li>
           <li>Re-opened the original while an old proxy already existed, then wondered why data looked “stale.”</li>
+          <li>Cleared browser site data on the hosted website and lost the IndexedDB proxy.</li>
         </ul>
 
         <h3>Suggested daily workflow</h3>
         <ol>
-          <li>Start the EXE and open the application workbook.</li>
+          <li>Start the EXE or open the website, then open the application workbook.</li>
           <li>Confirm the right <strong>Active Config</strong> (or import one).</li>
           <li>Mark <strong>Grade</strong> columns if needed.</li>
           <li>Score each row with <strong>Submit all</strong> (and Auto-advance if you want).</li>
-          <li>Use <strong>Copy grades</strong> or open the AppData proxy file when results are needed elsewhere.</li>
+          <li>Use <strong>Copy grades</strong> when results are needed in Excel.</li>
         </ol>
       </section>
     </main>

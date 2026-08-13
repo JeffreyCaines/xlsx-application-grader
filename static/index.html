@@ -1125,7 +1125,15 @@
     const WS_TOKEN_KEY = "xlsx_grader_ws_token";
     const LAUNCHER_TAB_KEY = "xlsx_grader_launcher_tab_id";
     const WS_RECONNECT_MS = 2000;
+    const IDB_NAME = "xlsx_application_grader";
+    const IDB_VERSION = 1;
+    const IDB_STORE_FILES = "files";
+    const IDB_STORE_CONFIGS = "config_bundles";
+    const IDB_STORE_KV = "kv";
+    const IDB_KV_APP_STATE = "app_state";
+    const IDB_KV_USER_CONFIG = "user_config";
     const openWorkbooks = new Map();
+    let graderDbPromise = null;
 
     const state = {
       activeWorkbookKey: null,
@@ -1263,14 +1271,115 @@
       );
     }
 
+    function isHostedWeb() {
+      if (isNativeApp() || isWebServer()) return false;
+      return location.protocol === "http:" || location.protocol === "https:";
+    }
+
     function hasAppBackend() {
-      return isNativeApp() || isWebServer();
+      return isNativeApp() || isWebServer() || isHostedWeb();
     }
 
     function getAppApi() {
       if (isNativeApp()) return window.pywebview.api;
       if (isWebServer()) return webServerApi;
+      if (isHostedWeb()) return browserStorageApi;
       return null;
+    }
+
+    function isQuotaError(err) {
+      return !!(err && (err.name === "QuotaExceededError" || err.code === 22));
+    }
+
+    function wrapQuotaError(err) {
+      if (!isQuotaError(err)) return err || new Error("IndexedDB error");
+      const wrapped = new Error(
+        "Browser storage is full. Clear site data for this site or free disk space, then try again.",
+      );
+      wrapped.name = "QuotaExceededError";
+      wrapped.cause = err;
+      return wrapped;
+    }
+
+    function idbReq(req) {
+      return new Promise((resolve, reject) => {
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(wrapQuotaError(req.error));
+      });
+    }
+
+    function idbTxDone(tx) {
+      return new Promise((resolve, reject) => {
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(wrapQuotaError(tx.error));
+        tx.onabort = () => reject(wrapQuotaError(tx.error));
+      });
+    }
+
+    function openGraderDb() {
+      if (graderDbPromise) return graderDbPromise;
+      graderDbPromise = new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(IDB_STORE_FILES)) {
+            db.createObjectStore(IDB_STORE_FILES);
+          }
+          if (!db.objectStoreNames.contains(IDB_STORE_CONFIGS)) {
+            db.createObjectStore(IDB_STORE_CONFIGS);
+          }
+          if (!db.objectStoreNames.contains(IDB_STORE_KV)) {
+            db.createObjectStore(IDB_STORE_KV);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => {
+          graderDbPromise = null;
+          reject(wrapQuotaError(req.error) || new Error("Could not open browser storage."));
+        };
+      });
+      return graderDbPromise;
+    }
+
+    async function idbGet(storeName, key) {
+      const db = await openGraderDb();
+      const tx = db.transaction(storeName, "readonly");
+      const value = await idbReq(tx.objectStore(storeName).get(key));
+      await idbTxDone(tx);
+      return value === undefined ? null : value;
+    }
+
+    async function idbPut(storeName, key, value) {
+      const db = await openGraderDb();
+      const tx = db.transaction(storeName, "readwrite");
+      tx.objectStore(storeName).put(value, key);
+      await idbTxDone(tx);
+      return true;
+    }
+
+    async function idbDelete(storeName, key) {
+      const db = await openGraderDb();
+      const tx = db.transaction(storeName, "readwrite");
+      const store = tx.objectStore(storeName);
+      const existing = await idbReq(store.get(key));
+      store.delete(key);
+      await idbTxDone(tx);
+      return existing !== undefined && existing !== null;
+    }
+
+    async function idbGetAllEntries(storeName) {
+      const db = await openGraderDb();
+      const tx = db.transaction(storeName, "readonly");
+      const store = tx.objectStore(storeName);
+      const keys = await idbReq(store.getAllKeys());
+      const values = await idbReq(store.getAll());
+      await idbTxDone(tx);
+      return keys.map((key, i) => ({ key, value: values[i] }));
+    }
+
+    async function blobToBase64(blob) {
+      const buffer = await blob.arrayBuffer();
+      return arrayBufferToBase64(buffer);
     }
 
     const webServerApi = {
@@ -1363,6 +1472,83 @@
         if (!res.ok) throw new Error(`Failed to export config (${res.status})`);
         const data = await res.json();
         return !!data.saved;
+      },
+    };
+
+    const browserStorageApi = {
+      async read_config_bundle(workbookKey) {
+        const raw = await idbGet(IDB_STORE_CONFIGS, workbookKey);
+        return raw == null ? null : String(raw);
+      },
+      async write_config_bundle(workbookKey, content) {
+        await idbPut(IDB_STORE_CONFIGS, workbookKey, String(content ?? ""));
+        return true;
+      },
+      async list_config_bundles() {
+        const entries = await idbGetAllEntries(IDB_STORE_CONFIGS);
+        return entries.map(({ key, value }) => {
+          let config_names = [];
+          try {
+            const parsed = JSON.parse(value);
+            if (parsed?.configs && typeof parsed.configs === "object") {
+              config_names = Object.keys(parsed.configs).sort();
+            }
+          } catch {
+            /* ignore malformed bundle */
+          }
+          return {
+            workbook_key: key,
+            file_path: `idb://config_bundles/${key}.json`,
+            filename: `${key}.json`,
+            config_names,
+          };
+        });
+      },
+      async delete_config_bundle(workbookKey) {
+        return await idbDelete(IDB_STORE_CONFIGS, workbookKey);
+      },
+      async read_app_state() {
+        const raw = await idbGet(IDB_STORE_KV, IDB_KV_APP_STATE);
+        return raw == null ? null : String(raw);
+      },
+      async write_app_state(content) {
+        await idbPut(IDB_STORE_KV, IDB_KV_APP_STATE, String(content ?? ""));
+        return true;
+      },
+      async read_user_config() {
+        const raw = await idbGet(IDB_STORE_KV, IDB_KV_USER_CONFIG);
+        return raw == null ? null : String(raw);
+      },
+      async write_user_config(content) {
+        await idbPut(IDB_STORE_KV, IDB_KV_USER_CONFIG, String(content ?? ""));
+        return true;
+      },
+      async file_exists(path) {
+        const value = await idbGet(IDB_STORE_FILES, path);
+        return value != null;
+      },
+      async grade_proxy_path(name) {
+        const base = String(name || "").split(/[/\\]/).pop().trim();
+        const stem = base.replace(/\.xlsx$/i, "") || "workbook";
+        return `idb://Grades for - ${stem}.xlsx`;
+      },
+      async read_file_bytes(path) {
+        const value = await idbGet(IDB_STORE_FILES, path);
+        if (value == null) throw new Error("File not found in browser storage.");
+        if (typeof value === "string") return value;
+        if (value instanceof Blob) return await blobToBase64(value);
+        if (value instanceof ArrayBuffer) return arrayBufferToBase64(value);
+        if (ArrayBuffer.isView(value)) {
+          return arrayBufferToBase64(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength));
+        }
+        throw new Error("Unsupported browser storage value.");
+      },
+      async write_file_bytes(path, content_b64) {
+        const blob = new Blob([base64ToArrayBuffer(content_b64)], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        await idbPut(IDB_STORE_FILES, path, blob);
+        return true;
       },
     };
 
@@ -1487,7 +1673,7 @@
     }
 
     function initWebLifecycle() {
-      if (isNativeApp()) return;
+      if (!isWebServer()) return;
 
       const params = new URLSearchParams(location.search);
       const urlLauncher = params.get("launcher");
@@ -2244,7 +2430,7 @@
     }
 
     async function restoreOpenFilesFromAppState() {
-      if (!isNativeApp() && !isWebServer()) return;
+      if (!hasAppBackend()) return;
       try {
       const appState = await loadNativeAppState();
       if (!appState.open_file_paths.length) return;
@@ -2291,7 +2477,7 @@
     }
 
     function onAppReady(fn) {
-      if (isWebServer()) {
+      if (isWebServer() || isHostedWeb()) {
         fn();
       }
     }
@@ -2841,7 +3027,7 @@
           return;
         }
 
-        if (window.showSaveFilePicker) {
+        if (!isHostedWeb() && window.showSaveFilePicker) {
           const handle = await window.showSaveFilePicker({
             suggestedName: fileName,
             types: [{
@@ -3170,12 +3356,25 @@
 
       const saveApi = getAppApi();
       if (state.filePath && saveApi?.write_file_bytes) {
-        await saveApi.write_file_bytes(state.filePath, arrayBufferToBase64(data));
+        try {
+          await saveApi.write_file_bytes(state.filePath, arrayBufferToBase64(data));
+        } catch (err) {
+          if (isQuotaError(err)) {
+            setStatus(err.message);
+          }
+          throw err;
+        }
         setDirty(false);
         if (state.activeWorkbookKey) {
           openWorkbooks.set(state.activeWorkbookKey, captureCurrentSession());
         }
         return true;
+      }
+
+      if (isHostedWeb()) {
+        const err = new Error("Could not save grades to browser storage.");
+        setStatus(err.message);
+        throw err;
       }
 
       if (window.location.protocol !== "file:") {
@@ -3847,10 +4046,16 @@
           multiple: true,
         });
         for (const handle of handles) {
-          await ensureWritePermission(handle);
+          if (!isHostedWeb()) {
+            await ensureWritePermission(handle);
+          }
           const file = await handle.getFile();
           const buffer = await file.arrayBuffer();
-          await addWorkbookFromBuffer(buffer, file.name, null, handle);
+          if (isHostedWeb()) {
+            await openOriginalAsProxy(file.name, buffer);
+          } else {
+            await addWorkbookFromBuffer(buffer, file.name, null, handle);
+          }
         }
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -3870,8 +4075,17 @@
       const files = [...(e.target.files || [])];
       e.target.value = "";
       for (const file of files) {
-        const buffer = await file.arrayBuffer();
-        await addWorkbookFromBuffer(buffer, file.name, null, null);
+        try {
+          const buffer = await file.arrayBuffer();
+          if (isHostedWeb()) {
+            await openOriginalAsProxy(file.name, buffer);
+          } else {
+            await addWorkbookFromBuffer(buffer, file.name, null, null);
+          }
+        } catch (err) {
+          console.error(err);
+          setStatus("Open failed: " + err.message);
+        }
       }
     });
 
@@ -4016,7 +4230,7 @@
     });
 
     onAppReady(() => {
-      if (isLauncherTab()) {
+      if (isHostedWeb() || isLauncherTab()) {
         void restoreOpenFilesFromAppState();
       }
     });
