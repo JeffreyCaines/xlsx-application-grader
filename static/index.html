@@ -878,7 +878,7 @@
     <div class="topbar-field">
       <span class="topbar-legend topbar-legend-spacer" aria-hidden="true">File</span>
       <div class="topbar-brand">
-        <button id="btn-open" type="button">Open .xlsx</button>
+        <button id="btn-open" type="button">Open File</button>
         <button id="btn-close-file" type="button" class="hidden" disabled title="Close file">Close</button>
       </div>
     </div>
@@ -894,7 +894,7 @@
     <div class="config-row">
       <div class="topbar-field">
         <label class="topbar-legend" for="config-select">Active Config</label>
-        <select id="config-select" class="select-truncate" disabled title="Saved configs for this workbook"></select>
+        <select id="config-select" class="select-truncate" disabled title="Saved configs for this workbook. New Config is the last item."></select>
       </div>
       <div class="config-actions">
         <button id="btn-rename-config" type="button" disabled title="Rename config" aria-label="Rename config" aria-haspopup="dialog" aria-controls="config-rename-modal">
@@ -903,7 +903,6 @@
             <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/>
           </svg>
         </button>
-        <button id="btn-new-config" type="button" disabled aria-haspopup="dialog" aria-controls="config-create-modal">New Config</button>
         <button id="btn-import-config" type="button" disabled>Import Config</button>
         <button id="btn-export-config" type="button" disabled>Export Config</button>
         <input id="config-import-input" type="file" accept=".json,application/json" class="hidden">
@@ -1066,8 +1065,10 @@
     <div class="modal-dialog">
       <h2 id="author-credits-modal-title">Author Credits</h2>
       <p>Jeffrey Caines</p>
-      <p>Student Team Coordinator</p>
-      <p>HSTIP (Co-op) 2026</p>
+      <p>CNA Software Development (Co-op) Student</p>
+      <p>CNA Computer Engineering (Co-op) Graduate</p>
+      <p><a href="mailto:jeffreycaines7@gmail.com">jeffreycaines7@gmail.com</a></p>
+  
       <p><a href="https://jeffreycaines.dev" target="_blank">jeffreycaines.dev</a></p>
       <p><a href="https://linkedin.com/in/jcaines7" target="_blank">LinkedIn</a> | <a href="https://github.com/jeffreycaines" target="_blank">GitHub</a></p>
       <div class="modal-actions">
@@ -1119,6 +1120,7 @@
     const MIN_GRADING_PANEL_WIDTH = 220;
     const MIN_COLUMNS_PANEL_WIDTH = 280;
     const CONFIG_BASE_NAME = "default";
+    const NEW_CONFIG_OPTION_VALUE = "__new_config__";
     const GRADE_COL_PREFIX = "Grade for: ";
     const SUM_COL_NAME = "Sum of All Grades";
     const NO_WORKBOOK_EMPTY_MSG = "Open a workbook to get started.";
@@ -2768,7 +2770,9 @@
     function refreshConfigSelect() {
       const select = $("config-select");
       const bundle = loadConfigBundle();
-      const names = bundle ? Object.keys(bundle.configs).sort(configNameSort) : [];
+      const names = bundle
+        ? Object.keys(bundle.configs).filter((name) => name !== NEW_CONFIG_OPTION_VALUE).sort(configNameSort)
+        : [];
       const active = state.activeConfigName || bundle?.active_config || CONFIG_BASE_NAME;
 
       select.innerHTML = "";
@@ -2788,12 +2792,20 @@
         }
       }
 
+      const newOpt = document.createElement("option");
+      newOpt.value = NEW_CONFIG_OPTION_VALUE;
+      newOpt.textContent = "New Config";
+      select.appendChild(newOpt);
+
       if ([...select.options].some((opt) => opt.value === active)) {
         select.value = active;
       } else if (select.options.length) {
-        select.value = select.options[0].value;
+        const first = [...select.options].find((opt) => opt.value !== NEW_CONFIG_OPTION_VALUE);
+        select.value = first ? first.value : CONFIG_BASE_NAME;
       }
-      state.activeConfigName = select.value || CONFIG_BASE_NAME;
+      state.activeConfigName = select.value === NEW_CONFIG_OPTION_VALUE
+        ? CONFIG_BASE_NAME
+        : (select.value || CONFIG_BASE_NAME);
       syncSelectTitle(select);
     }
 
@@ -2982,12 +2994,11 @@
     }
 
     function initConfigCreate() {
-      const btn = $("btn-new-config");
       const overlay = $("config-create-modal");
       const input = $("config-create-input");
       const cancelBtn = $("config-create-modal-cancel");
       const confirmBtn = $("config-create-modal-confirm");
-      if (!btn || !overlay || !input || !cancelBtn || !confirmBtn) return;
+      if (!overlay || !input || !cancelBtn || !confirmBtn) return;
 
       cancelBtn.addEventListener("click", () => setConfigCreateOpen(false));
       confirmBtn.addEventListener("click", confirmConfigCreate);
@@ -3099,7 +3110,6 @@
     function setConfigControlsEnabled(enabled) {
       $("config-select").disabled = !enabled;
       $("btn-rename-config").disabled = !enabled;
-      $("btn-new-config").disabled = !enabled;
       $("btn-import-config").disabled = !enabled;
       $("btn-export-config").disabled = !enabled;
     }
@@ -4116,8 +4126,6 @@
       renderRowPanel();
     });
 
-    $("btn-new-config").addEventListener("click", createNewConfig);
-
     $("btn-import-config").addEventListener("click", () => {
       $("config-import-input").click();
     });
@@ -4141,6 +4149,12 @@
     });
 
     $("config-select").addEventListener("change", (e) => {
+      if (e.target.value === NEW_CONFIG_OPTION_VALUE) {
+        e.target.value = state.activeConfigName || CONFIG_BASE_NAME;
+        syncSelectTitle(e.target);
+        createNewConfig();
+        return;
+      }
       switchToConfig(e.target.value);
     });
 
