@@ -212,6 +212,7 @@
         <nav class="top__links" aria-label="Quick links">
           <a href="#start">How to start</a>
           <a href="#first">First-time grading</a>
+          <a href="#credits">Credits</a>
           <a href="#reference">Quick reference</a>
         </nav>
       </div>
@@ -236,6 +237,7 @@
           <li><a href="#copy">Copy grades</a></li>
           <li><a href="#configs">Configs</a></li>
           <li><a href="#settings">Settings and layout</a></li>
+          <li><a href="#credits">Author credits</a></li>
           <li><a href="#reference">Quick reference</a></li>
         </ol>
       </nav>
@@ -248,8 +250,8 @@
           grades, and store those grades in a proxy copy.
         </p>
         <p>
-          You can run it as a local Windows program or as a website. There is no login.
-          On the website, grades stay in this browser only.
+          You can run it as a local Windows program or as a hosted website. There is no
+          login. On the hosted website, grades stay in this browser only.
         </p>
         <table>
           <thead>
@@ -295,12 +297,13 @@
           <tbody>
             <tr>
               <td><code>xlsx_application_grader.exe</code></td>
-              <td>Opens a desktop window for the grader.</td>
+              <td>Opens a desktop window (Edge WebView2). No browser tab.</td>
             </tr>
             <tr>
               <td><code>xlsx_application_grader_web.exe</code></td>
               <td>
-                Starts a local server and opens the grader in your default browser.
+                Starts a local server (default <code>http://127.0.0.1:8765/</code>) and
+                opens the grader in your default browser.
               </td>
             </tr>
             <tr>
@@ -315,13 +318,21 @@
         <ol>
           <li>Open the EXE you were given, or open the website URL.</li>
           <li>Wait for the grader window or browser tab to appear.</li>
-          <li>You should see <strong>Open .xlsx</strong> in the top bar.</li>
+          <li>You should see <strong>Open File</strong> in the top bar.</li>
         </ol>
         <p>
-          If you close every browser tab while using the local web EXE, the local server stops
-          after a short delay. Restart the EXE if you see
-          <strong>Server connection lost</strong>. The hosted website does not use that server
-          and does not show that banner.
+          If you already graded files in this same mode, the app reopens those proxy files
+          on launch.
+        </p>
+        <p>
+          If you close every browser tab while using the local web EXE, the local server
+          stops after about 10 seconds. Restart the EXE if you see
+          <strong>Server connection lost</strong>. The hosted website does not use that
+          server and does not show that banner.
+        </p>
+        <p>
+          This manual is also at <code>/user-manual.html</code> on the local web EXE and
+          on the hosted website.
         </p>
       </section>
 
@@ -339,11 +350,11 @@
             <tr>
               <td><strong>Top bar</strong></td>
               <td>
-                <strong>Open .xlsx</strong>, <strong>Close</strong>, <strong>File</strong>,
+                <strong>Open File</strong>, <strong>Close</strong>, <strong>File</strong>,
                 <strong>Sheet</strong>, and config controls
-                (<strong>Active Config</strong>, <strong>Rename</strong>,
-                <strong>New Config</strong>, <strong>Import Config</strong>,
-                <strong>Export Config</strong>)
+                (<strong>Active Config</strong>, pencil <strong>Rename</strong>,
+                <strong>Import Config</strong>, <strong>Export Config</strong>).
+                <strong>New Config</strong> is the last item in <strong>Active Config</strong>.
               </td>
             </tr>
             <tr>
@@ -367,8 +378,9 @@
             <tr>
               <td><strong>Footer</strong></td>
               <td>
-                <strong>Settings</strong>, layout toggles, theme switch, and a status line
-                (for example <code>No file loaded</code>).
+                Gear <strong>Settings</strong> (including the info button for
+                <strong>Author Credits</strong>), layout toggles, theme switch, and a
+                status line (for example <code>No file loaded</code>).
               </td>
             </tr>
           </tbody>
@@ -379,7 +391,7 @@
         <h2>4. First-time grading</h2>
         <p>Do this the first time you grade a workbook.</p>
         <ol>
-          <li>Select <strong>Open .xlsx</strong> and choose one or more <code>.xlsx</code> files.</li>
+          <li>Select <strong>Open File</strong> and choose one or more <code>.xlsx</code> files.</li>
           <li>
             In <strong>Columns</strong>, check <strong>Grade</strong> beside each column you want
             to score.
@@ -444,13 +456,17 @@
             Use <strong>File</strong> to switch among workbooks still open in this session.
           </li>
           <li>Use <strong>Close</strong> to close the active file.</li>
+          <li>
+            On the next launch, the app restores the last open proxy files for this mode
+            (native, local web, or this browser).
+          </li>
         </ul>
       </section>
 
       <section id="saved">
         <h2>6. Where grades are saved</h2>
         <p>
-          When you open a file through <strong>Open .xlsx</strong>, grades are written to a
+          When you open a file through <strong>Open File</strong>, grades are written to a
           <strong>proxy copy</strong>, not to the original file you picked. The original
           workbook on disk is never overwritten.
         </p>
@@ -466,6 +482,10 @@
         <ul>
           <li>If that proxy already exists, the app reuses it instead of copying again.</li>
           <li>
+            The native EXE and the local web EXE both use that AppData folder for proxies.
+            Their config folders are separate.
+          </li>
+          <li>
             Open the graded file from AppData, or use <strong>Copy grades</strong>, when you
             need the results elsewhere.
           </li>
@@ -478,6 +498,10 @@
         <ul>
           <li>If a proxy for that file name already exists in this browser, the site reuses it.</li>
           <li>Use <strong>Copy grades</strong> to paste results into Excel.</li>
+          <li>
+            If browser storage is full, the status shows a message to clear site data or
+            free disk space.
+          </li>
           <li>
             Clearing site data, switching browsers, or using another device removes the proxy
             and configs. There is no cross-device sync.
@@ -497,12 +521,12 @@
           <li>Paste into Excel (or another sheet). The clipboard uses tab-separated values.</li>
         </ol>
         <p>
-          Only rows that have grade data are included, along with the grade headers and
-          <code>Sum of All Grades</code> when present.
+          Only rows that have grade data are included. Empty grade columns are omitted.
+          <code>Sum of All Grades</code> is included when that column has values.
         </p>
         <p>
           On the hosted website this is the way to get grades into Excel. The site does not
-          write the graded workbook back to disk.
+          write the graded workbook back to your Downloads folder or disk.
         </p>
       </section>
 
@@ -510,7 +534,7 @@
         <h2>8. Configs</h2>
         <p>
           A config remembers how you set up grading for a workbook so you do not rebuild the
-          layout each time.
+          layout each time. Each workbook starts with a config named <code>default</code>.
         </p>
         <p>Configs store things like:</p>
         <ul>
@@ -524,10 +548,13 @@
         <ul>
           <li><strong>Active Config</strong>: switch among named setups for this workbook.</li>
           <li>
-            <strong>Rename</strong>: type a new name in the rename field. Duplicate names are
-            blocked.
+            Pencil <strong>Rename</strong>: opens a dialog. Duplicate names are blocked.
           </li>
-          <li><strong>New Config</strong>: create another named setup.</li>
+          <li>
+            <strong>New Config</strong>: last item in the <strong>Active Config</strong> list.
+            Opens a dialog to create another named setup (for example
+            <code>default (1)</code> if you keep the suggested name).
+          </li>
         </ul>
 
         <h3>8.2 Import and export</h3>
@@ -553,8 +580,10 @@
         <p>
           On the Windows EXEs, config files are kept under
           <code>%APPDATA%\xlsx_application_grader\</code> in
-          <code>native_configs</code> or <code>web_configs</code>, depending on which EXE you use.
-          On the hosted website, configs stay in this browser with the proxy files.
+          <code>native_configs</code> or <code>web_configs</code>, depending on which EXE
+          you use. Theme is stored once in <code>user_config.json</code> for both EXEs.
+          On the hosted website, configs and theme stay in this browser with the proxy
+          files.
         </p>
       </section>
 
@@ -582,6 +611,13 @@
               <td>Delete stored configs (see section 8).</td>
             </tr>
             <tr>
+              <td><strong>Author Credits</strong></td>
+              <td>
+                Info button in the Settings header. Shows the author name, contact, and
+                links. It does not change grading.
+              </td>
+            </tr>
+            <tr>
               <td>Column selector toggle</td>
               <td>Hide or show the left <strong>Columns</strong> panel.</td>
             </tr>
@@ -591,7 +627,10 @@
             </tr>
             <tr>
               <td>Theme switch</td>
-              <td>Switch between light and dark theme. The choice is remembered.</td>
+              <td>
+                Switch between light and dark theme. The choice is remembered for this
+                mode (EXE AppData or this browser).
+              </td>
             </tr>
           </tbody>
         </table>
@@ -601,13 +640,40 @@
         </p>
       </section>
 
+      <section id="credits">
+        <h2>10. Author credits</h2>
+        <p>
+          Open the gear <strong>Settings</strong> button in the footer, then the info
+          button in the Settings header. That dialog lists:
+        </p>
+        <ul>
+          <li>Jeffrey Caines</li>
+          <li>CNA Software Development (Co-op) Student</li>
+          <li>CNA Computer Engineering (Co-op) Graduate</li>
+          <li>
+            <a href="mailto:jeffreycaines7@gmail.com">jeffreycaines7@gmail.com</a>
+          </li>
+          <li>
+            <a href="https://jeffreycaines.dev" target="_blank" rel="noopener noreferrer">jeffreycaines.dev</a>
+          </li>
+          <li>
+            <a href="https://linkedin.com/in/jcaines7" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            and
+            <a href="https://github.com/jeffreycaines" target="_blank" rel="noopener noreferrer">GitHub</a>
+          </li>
+        </ul>
+      </section>
+
       <section id="reference">
-        <h2>10. Quick reference</h2>
+        <h2>11. Quick reference</h2>
 
         <h3>Key ideas</h3>
         <ul>
           <li>
             <strong>Header row</strong>: Excel row 1. Applicant data starts at row 2.
+          </li>
+          <li>
+            <strong>Open File</strong>: opens one or more <code>.xlsx</code> workbooks.
           </li>
           <li>
             <strong>Grade columns</strong>: named <code>Grade for: {header}</code>, written on
@@ -618,7 +684,9 @@
             this browser. The original path is not the save target.
           </li>
           <li>
-            <strong>Config</strong>: reusable grading layout for a workbook.
+            <strong>Config</strong>: reusable grading layout for a workbook. Default name
+            is <code>default</code>. <strong>New Config</strong> is the last
+            <strong>Active Config</strong> item.
           </li>
         </ul>
 
@@ -630,11 +698,16 @@
           <li>Closed all local web EXE tabs and kept grading; restart the app after a disconnect banner.</li>
           <li>Re-opened the original while an old proxy already existed, then wondered why data looked “stale.”</li>
           <li>Cleared browser site data on the hosted website and lost the IndexedDB proxy.</li>
+          <li>
+            Graded in the native EXE, then opened the web EXE (or the hosted site) and
+            expected the same configs. Those stores are separate.
+          </li>
         </ul>
 
         <h3>Suggested daily workflow</h3>
         <ol>
-          <li>Start the EXE or open the website, then open the application workbook.</li>
+          <li>Start the EXE or open the website. Last proxy files for this mode should reopen.</li>
+          <li>If needed, select <strong>Open File</strong> for a new workbook.</li>
           <li>Confirm the right <strong>Active Config</strong> (or import one).</li>
           <li>Mark <strong>Grade</strong> columns if needed.</li>
           <li>Score each row with <strong>Submit all</strong> (and Auto-advance if you want).</li>
